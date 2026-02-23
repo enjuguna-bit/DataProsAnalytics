@@ -1,0 +1,122 @@
+﻿<resources>
+    <string name="app_name">DataPros Analytics</string>
+
+    <!-- Bottom Navigation -->
+    <string name="nav_arrears">Arrears</string>
+    <string name="nav_dues">Dues</string>
+    <string name="nav_collections">Collections</string>
+    <string name="nav_dormant">Dormant</string>
+    <string name="nav_branch">Branch</string>
+    <string name="nav_recovery">Recovery</string>
+    <string name="nav_performance">Performance</string>
+    <string name="nav_portfolio">Portfolio</string>
+    <string name="nav_mtd_hub">MTD</string>
+    <string name="nav_mtd">MTD</string>
+    <string name="nav_mtd_pivot">MTD Pivot</string>
+    <string name="nav_ro">RO</string>
+    <string name="nav_sod_cr">SOD CR</string>
+    <string name="nav_mtd_cr">MTD CR</string>
+    <string name="nav_mtd_income">MTD Income</string>
+
+    <!-- Common UI -->
+    <string name="btn_select_file">Select File</string>
+    <string name="btn_process">Process</string>
+    <string name="btn_export">Export Report</string>
+    <string name="btn_share">Share</string>
+    <string name="no_file_selected">No file selected</string>
+    <string name="file_selected">File: %1$s</string>
+    <string name="processing">Processing...</string>
+    <string name="done">Done!</string>
+    <string name="error_prefix">Error: %1$s</string>
+    <string name="report_saved">Report saved to Downloads</string>
+
+    <!-- Module titles -->
+    <string name="title_arrears">Arrears Dashboard</string>
+    <string name="title_dues">Loan Dues Report</string>
+    <string name="title_collections">Arrears Collected</string>
+    <string name="title_dormant">Dormant Arrangements</string>
+    <string name="title_branch">Branch Comparison</string>
+    <string name="title_recovery">Recovery Center</string>
+    <string name="title_performance">Performance Center</string>
+    <string name="title_portfolio">Portfolio Center</string>
+    <string name="title_mtd_hub">MTD Center</string>
+    <string name="title_mtd">MTD Unpaid Dues</string>
+    <string name="title_mtd_pivot">MTD Pivot Analyzer</string>
+    <string name="title_ro">RO Performance</string>
+    <string name="title_sod_cr">SOD CR Per Portfolio</string>
+    <string name="title_mtd_cr">MTD CR Per Portfolio</string>
+    <string name="title_mtd_income">MTD Income Analysis</string>
+
+    <!-- Hub descriptions -->
+    <string name="hub_recovery_subtitle">Core recovery workflows for arrears and dues movement.</string>
+    <string name="hub_performance_subtitle">Officer and branch performance analysis tools.</string>
+    <string name="hub_portfolio_subtitle">Portfolio quality and collection-rate portfolio modules.</string>
+    <string name="hub_mtd_subtitle">Month-to-date tracking for dues and income targets.</string>
+    <string name="hub_action_arrears">Executive arrears dashboard by bucket and sales rep.</string>
+    <string name="hub_action_dues">Loan dues and arrears detail with branch and RO views.</string>
+    <string name="hub_action_collections">Compare SOD vs current files and compute collections.</string>
+    <string name="hub_action_branch">Compare income, CR, and disbursement across branches.</string>
+    <string name="hub_action_ro">Rank ROs by income, collection rate, and disbursement.</string>
+    <string name="hub_action_mtd_pivot">Run pivot targets for new, MTD, and daily performance.</string>
+    <string name="hub_action_dormant">Clean dormant arrangements and phone quality at branch level.</string>
+    <string name="hub_action_sod_cr">SOD collection rate analysis per portfolio.</string>
+    <string name="hub_action_mtd_cr">MTD collection rate analysis per portfolio with targets.</string>
+    <string name="hub_action_mtd">Month-to-date unpaid dues and collection rate summary.</string>
+    <string name="hub_action_mtd_income">Day-level income target analysis per portfolio.</string>
+
+    <!-- Collections specific -->
+    <string name="label_select_sod">Select SOD (Start-of-Day) File</string>
+    <string name="label_select_current">Select Current File</string>
+    <string name="label_sod_file">SOD File: %1$s</string>
+    <string name="label_current_file">Current File: %1$s</string>
+
+    <!-- Branch comparison specific -->
+    <string name="label_income_file">Income File: %1$s</string>
+    <string name="label_cr_file">CR File: %1$s</string>
+    <string name="label_disb_file">Disbursement File: %1$s</string>
+    <string name="btn_income">Income File</string>
+    <string name="btn_cr">CR File</string>
+    <string name="btn_collection">Collection File</string>
+    <string name="btn_disb">Disbursement File</string>
+
+    <!-- Subscription -->
+    <string name="menu_subscription">Subscription</string>
+    <string name="subscription_title">Go Premium</string>
+    <string name="subscription_subtitle">Pick a plan and pay securely with M-Pesa.</string>
+    <string name="subscription_highlight">Instant activation on this device after confirmation.</string>
+    <string name="subscription_step_phone">Step 1: Enter M-Pesa phone number</string>
+    <string name="subscription_phone_hint">M-Pesa phone number</string>
+    <string name="subscription_phone_placeholder">0712345678</string>
+    <string name="subscription_phone_helper">We use this number to verify your payment and activate premium.</string>
+    <string name="subscription_step_plan">Step 2: Select plan</string>
+    <string name="subscription_plan_one_hour">1 Hour - KSH 60</string>
+    <string name="subscription_plan_six_hour">6 Hours - KSH 100</string>
+    <string name="subscription_plan_daily">24 Hours - KSH 200</string>
+    <string name="subscription_plan_weekly">Weekly - KSH 1,000</string>
+    <string name="subscription_plan_best_value">Best value</string>
+    <string name="subscription_selected_plan">Selected plan</string>
+    <string name="subscription_continue_payment">Continue to payment</string>
+    <string name="subscription_check_status">Check active subscription</string>
+    <string name="subscription_status_hint">If you paid recently, status may take a few minutes to update.</string>
+    <string name="subscription_status_default">No active subscription found.</string>
+    <string name="subscription_loading_payment">Preparing payment page...</string>
+    <string name="subscription_loading_status">Checking subscription status...</string>
+    <string name="subscription_close">Close</string>
+    <string name="subscription_phone_required">Enter your M-Pesa phone number above</string>
+    <string name="subscription_phone_invalid">Enter a valid Kenyan phone number (e.g., 0712345678).</string>
+    <string name="subscription_payment_opened">Payment page opened. Complete M-Pesa prompt on your phone.</string>
+    <string name="subscription_payment_error">Unable to open payment page right now.</string>
+    <string name="subscription_payment_pending">Payment processing. Check status again in a few minutes.</string>
+    <string name="subscription_active_plan_and_time">Active - %1$s plan. Paid until: %2$s</string>
+    <string name="subscription_active_time_only">Active. Paid until: %1$s</string>
+    <string name="subscription_active_plan_only">Active - %1$s plan.</string>
+    <string name="subscription_active">Active subscription</string>
+    <string name="subscription_plan_format">%1$s plan</string>
+
+    <!-- Free-tier usage limit -->
+    <string name="usage_limit_title">Daily free limit reached</string>
+    <string name="usage_limit_message">Free plan allows up to %1$d reports per day. Upgrade to continue.</string>
+    <string name="usage_limit_upgrade">Upgrade</string>
+    <string name="usage_limit_payment_pending">Payment processing. Please check subscription status.</string>
+</resources>
+

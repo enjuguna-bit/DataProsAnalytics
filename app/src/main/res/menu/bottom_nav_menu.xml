@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/nav_recovery"
+        android:icon="@drawable/ic_nav_arrears"
+        android:title="@string/nav_recovery" />
+
+    <item
+        android:id="@+id/nav_performance"
+        android:icon="@drawable/ic_nav_branch"
+        android:title="@string/nav_performance" />
+
+    <item
+        android:id="@+id/nav_portfolio"
+        android:icon="@drawable/ic_nav_collections"
+        android:title="@string/nav_portfolio" />
+
+    <item
+        android:id="@+id/nav_mtd_hub"
+        android:icon="@drawable/ic_nav_dues"
+        android:title="@string/nav_mtd_hub" />
+
+</menu>

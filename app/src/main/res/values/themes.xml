@@ -1,0 +1,126 @@
+<resources>
+    <style name="Theme.DataPros" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimaryVariant">@color/primary_variant</item>
+        <item name="colorSecondary">@color/secondary</item>
+        <item name="colorSecondaryVariant">@color/secondary_variant</item>
+        <item name="android:colorBackground">@color/background</item>
+        <item name="colorSurface">@color/surface</item>
+        <item name="colorOnPrimary">@color/on_primary</item>
+        <item name="colorOnSecondary">@color/on_secondary</item>
+        <item name="colorOnBackground">@color/on_background</item>
+        <item name="colorOnSurface">@color/on_surface</item>
+        <item name="android:windowBackground">@drawable/bg_dashboard_gradient</item>
+        <item name="android:statusBarColor">@color/background</item>
+        <item name="android:navigationBarColor">@color/background</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+        <item name="materialCardViewStyle">@style/Widget.DataPros.Card</item>
+        <item name="materialButtonStyle">@style/Widget.DataPros.Button</item>
+        <item name="materialButtonOutlinedStyle">@style/Widget.DataPros.Button.Outlined</item>
+        <item name="bottomNavigationStyle">@style/Widget.DataPros.BottomNavigationView</item>
+    </style>
+
+    <style name="Widget.DataPros.Card" parent="Widget.MaterialComponents.CardView">
+        <item name="cardBackgroundColor">@color/surface</item>
+        <item name="cardCornerRadius">18dp</item>
+        <item name="cardElevation">0dp</item>
+        <item name="strokeColor">@color/fx_panel_stroke</item>
+        <item name="strokeWidth">1dp</item>
+        <item name="rippleColor">@color/fx_glow_secondary</item>
+    </style>
+
+    <style name="Widget.DataPros.Button" parent="Widget.MaterialComponents.Button">
+        <item name="android:minHeight">52dp</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:letterSpacing">0.02</item>
+        <item name="cornerRadius">16dp</item>
+        <item name="backgroundTint">@color/primary</item>
+        <item name="android:textColor">@color/on_primary</item>
+        <item name="iconTint">@color/on_primary</item>
+        <item name="rippleColor">@color/fx_glow_primary</item>
+    </style>
+
+    <style name="Widget.DataPros.Button.Outlined" parent="Widget.MaterialComponents.Button.OutlinedButton">
+        <item name="android:minHeight">52dp</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:letterSpacing">0.02</item>
+        <item name="cornerRadius">16dp</item>
+        <item name="strokeWidth">1dp</item>
+        <item name="strokeColor">@color/fx_panel_stroke</item>
+        <item name="backgroundTint">@color/fx_glass_surface</item>
+        <item name="android:textColor">@color/on_surface</item>
+        <item name="iconTint">@color/on_surface</item>
+        <item name="rippleColor">@color/fx_glow_secondary</item>
+    </style>
+
+    <style name="Widget.DataPros.BottomNavigationView" parent="Widget.MaterialComponents.BottomNavigationView">
+        <item name="android:elevation">0dp</item>
+        <item name="itemHorizontalTranslationEnabled">false</item>
+        <item name="itemIconTint">@color/nav_item_tint</item>
+        <item name="itemTextColor">@color/nav_item_tint</item>
+        <item name="itemRippleColor">@color/fx_glow_secondary</item>
+        <item name="itemTextAppearanceActive">@style/TextAppearance.DataPros.NavLabel</item>
+        <item name="itemTextAppearanceInactive">@style/TextAppearance.DataPros.NavLabel</item>
+    </style>
+
+    <style name="TextAppearance.DataPros.ToolbarTitle" parent="TextAppearance.MaterialComponents.Headline6">
+        <item name="android:textColor">@color/on_surface</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:letterSpacing">0.02</item>
+    </style>
+
+    <style name="TextAppearance.DataPros.ModuleTitle" parent="TextAppearance.MaterialComponents.Headline4">
+        <item name="android:textColor">@color/on_surface</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:letterSpacing">0.015</item>
+    </style>
+
+    <style name="TextAppearance.DataPros.ModuleSubtitle" parent="TextAppearance.MaterialComponents.Body2">
+        <item name="android:textColor">@color/subtitle</item>
+        <item name="android:fontFamily">sans-serif</item>
+        <item name="android:letterSpacing">0.015</item>
+    </style>
+
+    <style name="TextAppearance.DataPros.NavLabel" parent="TextAppearance.MaterialComponents.Caption">
+        <item name="android:textSize">11sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:letterSpacing">0.06</item>
+    </style>
+
+    <style name="CardTitle" parent="TextAppearance.MaterialComponents.Headline6">
+        <item name="android:textColor">@color/on_surface</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:letterSpacing">0.01</item>
+    </style>
+
+    <style name="SectionLabel" parent="TextAppearance.MaterialComponents.Body2">
+        <item name="android:textColor">@color/subtitle</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:textSize">11sp</item>
+        <item name="android:letterSpacing">0.12</item>
+    </style>
+
+    <style name="StatValue" parent="TextAppearance.MaterialComponents.Headline5">
+        <item name="android:textColor">@color/secondary</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:letterSpacing">0.01</item>
+    </style>
+
+    <style name="StatLabel" parent="TextAppearance.MaterialComponents.Caption">
+        <item name="android:textColor">@color/subtitle</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:letterSpacing">0.08</item>
+        <item name="android:textAllCaps">true</item>
+    </style>
+</resources>

@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/nav_recovery">
+
+    <fragment
+        android:id="@+id/nav_recovery"
+        android:name="com.datapros.app.modules.RecoveryHubFragment"
+        android:label="@string/title_recovery" />
+
+    <fragment
+        android:id="@+id/nav_performance"
+        android:name="com.datapros.app.modules.PerformanceHubFragment"
+        android:label="@string/title_performance" />
+
+    <fragment
+        android:id="@+id/nav_portfolio"
+        android:name="com.datapros.app.modules.PortfolioHubFragment"
+        android:label="@string/title_portfolio" />
+
+    <fragment
+        android:id="@+id/nav_mtd_hub"
+        android:name="com.datapros.app.modules.MtdHubFragment"
+        android:label="@string/title_mtd_hub" />
+
+    <fragment
+        android:id="@+id/nav_arrears"
+        android:name="com.datapros.app.modules.ArrearsFragment"
+        android:label="@string/title_arrears" />
+
+    <fragment
+        android:id="@+id/nav_dues"
+        android:name="com.datapros.app.modules.DuesFragment"
+        android:label="@string/title_dues" />
+
+    <fragment
+        android:id="@+id/nav_collections"
+        android:name="com.datapros.app.modules.CollectionsFragment"
+        android:label="@string/title_collections" />
+
+    <fragment
+        android:id="@+id/nav_dormant"
+        android:name="com.datapros.app.modules.DormantFragment"
+        android:label="@string/title_dormant" />
+
+    <fragment
+        android:id="@+id/nav_branch"
+        android:name="com.datapros.app.modules.BranchComparisonFragment"
+        android:label="@string/title_branch" />
+
+    <fragment
+        android:id="@+id/nav_mtd"
+        android:name="com.datapros.app.modules.MtdFragment"
+        android:label="@string/title_mtd" />
+
+    <fragment
+        android:id="@+id/nav_mtd_pivot"
+        android:name="com.datapros.app.modules.MtdPivotFragment"
+        android:label="@string/title_mtd_pivot" />
+
+    <fragment
+        android:id="@+id/nav_ro"
+        android:name="com.datapros.app.modules.RoPerformanceFragment"
+        android:label="@string/title_ro" />
+
+    <fragment
+        android:id="@+id/nav_sod_cr"
+        android:name="com.datapros.app.modules.SodCrPortfolioFragment"
+        android:label="@string/title_sod_cr" />
+
+    <fragment
+        android:id="@+id/nav_mtd_cr"
+        android:name="com.datapros.app.modules.MtdCrPortfolioFragment"
+        android:label="@string/title_mtd_cr" />
+
+    <fragment
+        android:id="@+id/nav_mtd_income"
+        android:name="com.datapros.app.modules.MtdIncomeAnalysisFragment"
+        android:label="@string/title_mtd_income" />
+
+</navigation>

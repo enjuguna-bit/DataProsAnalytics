@@ -1,0 +1,61 @@
+<resources>
+    <color name="primary">#3CD8FF</color>
+    <color name="primary_variant">#1296D8</color>
+    <color name="secondary">#29F6C7</color>
+    <color name="secondary_variant">#00B894</color>
+    <color name="accent">#29F6C7</color>
+    <color name="danger">#FF5D7C</color>
+    <color name="warning">#FFC857</color>
+    <color name="background">#040916</color>
+    <color name="surface">#0C162B</color>
+    <color name="on_primary">#011723</color>
+    <color name="on_secondary">#001A12</color>
+    <color name="on_background">#EAF4FF</color>
+    <color name="on_surface">#EAF4FF</color>
+    <color name="subtitle">#91A8CC</color>
+    <color name="divider">#25385E</color>
+    <color name="card_shadow">#AA020712</color>
+
+    <!-- bucket colors -->
+    <color name="bucket_low">#1F3D5E</color>
+    <color name="bucket_mid">#2E4F74</color>
+    <color name="bucket_high">#3A5886</color>
+    <color name="bucket_critical">#6A3D54</color>
+
+    <!-- Navigation and chrome -->
+    <color name="nav_surface_start">#CC0B1730</color>
+    <color name="nav_surface_end">#CC081224</color>
+    <color name="nav_stroke">#663CD8FF</color>
+    <color name="nav_active">#3CD8FF</color>
+    <color name="nav_inactive">#6E88B5</color>
+    <color name="toolbar_start">#BF0D1A36</color>
+    <color name="toolbar_end">#A60A1428</color>
+
+    <!-- Billing/subscription UI aliases -->
+    <color name="color_primary">@color/primary</color>
+    <color name="color_surface">@color/surface</color>
+    <color name="color_on_surface">@color/on_surface</color>
+    <color name="color_on_surface_variant">@color/subtitle</color>
+    <color name="color_outline_variant">@color/divider</color>
+
+    <!-- Status semantic colors -->
+    <color name="status_success">#FF2AF7B2</color>
+    <color name="status_warning">#FFFFC65B</color>
+    <color name="status_info">#FF4BD4FF</color>
+    <color name="status_muted">#FF8DA2C5</color>
+
+    <!-- Decorative colors used by subscription screen -->
+    <color name="fx_atmosphere_start">#FF030A1B</color>
+    <color name="fx_atmosphere_mid">#FF07142F</color>
+    <color name="fx_atmosphere_end">#FF020711</color>
+    <color name="fx_glow_primary">#8838D9FF</color>
+    <color name="fx_glow_secondary">#6630FFDF</color>
+    <color name="fx_glow_tertiary">#4D2AF7B2</color>
+    <color name="fx_glass_surface">#CC102341</color>
+    <color name="fx_glass_surface_alt">#BF142D52</color>
+    <color name="fx_panel_stroke">#8042CFFF</color>
+    <color name="fx_badge_start">#FF1D3A66</color>
+    <color name="fx_badge_end">#FF145E79</color>
+    <color name="fx_badge_stroke">#804BD4FF</color>
+    <color name="fx_badge_text">#FFB7F8FF</color>
+</resources>

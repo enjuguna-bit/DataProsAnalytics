@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="300"
+                android:centerColor="@color/fx_atmosphere_mid"
+                android:endColor="@color/fx_atmosphere_end"
+                android:startColor="@color/fx_atmosphere_start" />
+        </shape>
+    </item>
+
+    <item
+        android:left="-220dp"
+        android:right="80dp"
+        android:top="-260dp">
+        <shape android:shape="rectangle">
+            <gradient
+                android:centerX="0.15"
+                android:centerY="0.05"
+                android:endColor="@android:color/transparent"
+                android:gradientRadius="420dp"
+                android:startColor="@color/fx_glow_primary"
+                android:type="radial" />
+        </shape>
+    </item>
+
+    <item
+        android:left="120dp"
+        android:right="-220dp"
+        android:top="110dp">
+        <shape android:shape="rectangle">
+            <gradient
+                android:centerX="0.88"
+                android:centerY="0.28"
+                android:endColor="@android:color/transparent"
+                android:gradientRadius="380dp"
+                android:startColor="@color/fx_glow_secondary"
+                android:type="radial" />
+        </shape>
+    </item>
+
+    <item
+        android:bottom="-220dp"
+        android:left="-80dp"
+        android:right="-80dp"
+        android:top="420dp">
+        <shape android:shape="rectangle">
+            <gradient
+                android:centerX="0.5"
+                android:centerY="0.95"
+                android:endColor="@android:color/transparent"
+                android:gradientRadius="460dp"
+                android:startColor="@color/fx_glow_tertiary"
+                android:type="radial" />
+        </shape>
+    </item>
+</layer-list>

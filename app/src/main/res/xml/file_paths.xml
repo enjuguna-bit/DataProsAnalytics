@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Files inside the app's external files dir (no permission needed) -->
+    <external-files-path name="external_files" path="." />
+    <!-- Downloads folder (shared) -->
+    <external-path name="external_storage" path="Download/" />
+</paths>

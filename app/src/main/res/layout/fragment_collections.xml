@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Layout for Collections module: needs SOD file + Current file -->
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_dashboard_gradient"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:id="@+id/content_panel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="14dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="14dp"
+        android:layout_marginBottom="10dp"
+        android:animateLayoutChanges="true"
+        android:background="@drawable/bg_content_panel"
+        android:layoutAnimation="@anim/fx_stagger_in"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/title_collections"
+            android:textAppearance="@style/TextAppearance.DataPros.ModuleTitle"
+            android:paddingBottom="4dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Bucket analysis: 1-15 | 16-30 | 31-180 days"
+            android:textAppearance="@style/TextAppearance.DataPros.ModuleSubtitle"
+            android:paddingBottom="16dp" />
+
+        <!-- SOD file -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="18dp"
+            app:cardElevation="0dp"
+            android:layout_marginBottom="12dp">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:text="SOD FILE (Start of Day)" android:textAppearance="@style/SectionLabel"
+                    android:paddingBottom="8dp" />
+                <TextView android:id="@+id/tv_sod_file"
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:text="@string/no_file_selected"
+                    android:textColor="@color/subtitle" android:paddingBottom="12dp"
+                    android:ellipsize="middle" android:singleLine="true" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_select_sod"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="@string/label_select_sod"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    app:icon="@drawable/ic_upload_data"
+                    app:iconGravity="textStart"
+                    app:iconPadding="8dp" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Current file -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="18dp"
+            app:cardElevation="0dp"
+            android:layout_marginBottom="16dp">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:text="CURRENT FILE (End of Day / Now)" android:textAppearance="@style/SectionLabel"
+                    android:paddingBottom="8dp" />
+                <TextView android:id="@+id/tv_current_file"
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:text="@string/no_file_selected"
+                    android:textColor="@color/subtitle" android:paddingBottom="12dp"
+                    android:ellipsize="middle" android:singleLine="true" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_select_current"
+                    android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="@string/label_select_current"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    app:icon="@drawable/ic_upload_data"
+                    app:iconGravity="textStart"
+                    app:iconPadding="8dp" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_process"
+            android:layout_width="match_parent" android:layout_height="56dp"
+            android:text="@string/btn_process"
+            android:enabled="false"
+            android:layout_marginBottom="16dp"
+            app:cornerRadius="16dp"
+            app:icon="@drawable/ic_process_stream"
+            app:iconGravity="textStart"
+            app:iconPadding="10dp" />
+
+        <com.google.android.material.progressindicator.LinearProgressIndicator
+            android:id="@+id/progress_bar"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:visibility="gone" android:layout_marginBottom="16dp"
+            app:trackCornerRadius="6dp" app:indicatorColor="@color/secondary" />
+
+        <TextView android:id="@+id/tv_status"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:textColor="@color/subtitle" android:gravity="center"
+            android:visibility="gone" android:layout_marginBottom="16dp" />
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_stats"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            app:cardCornerRadius="18dp" app:cardElevation="0dp"
+            android:layout_marginBottom="16dp" android:visibility="gone">
+            <LinearLayout
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="vertical" android:padding="16dp">
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:text="COLLECTION SUMMARY" android:textAppearance="@style/SectionLabel"
+                    android:paddingBottom="12dp" />
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+                    <LinearLayout android:layout_width="0dp" android:layout_weight="1"
+                        android:layout_height="wrap_content" android:orientation="vertical"
+                        android:gravity="center" android:padding="8dp">
+                        <TextView android:id="@+id/tv_stat1_value" android:layout_width="wrap_content"
+                            android:layout_height="wrap_content" android:textAppearance="@style/StatValue" android:text="-" />
+                        <TextView android:id="@+id/tv_stat1_label" android:layout_width="wrap_content"
+                            android:layout_height="wrap_content" android:textAppearance="@style/StatLabel" android:text="1-15 Days" />
+                    </LinearLayout>
+                    <View android:layout_width="1dp" android:layout_height="match_parent" android:background="@color/divider" />
+                    <LinearLayout android:layout_width="0dp" android:layout_weight="1"
+                        android:layout_height="wrap_content" android:orientation="vertical"
+                        android:gravity="center" android:padding="8dp">
+                        <TextView android:id="@+id/tv_stat2_value" android:layout_width="wrap_content"
+                            android:layout_height="wrap_content" android:textAppearance="@style/StatValue" android:text="-" />
+                        <TextView android:id="@+id/tv_stat2_label" android:layout_width="wrap_content"
+                            android:layout_height="wrap_content" android:textAppearance="@style/StatLabel" android:text="16-30 Days" />
+                    </LinearLayout>
+                    <View android:layout_width="1dp" android:layout_height="match_parent" android:background="@color/divider" />
+                    <LinearLayout android:layout_width="0dp" android:layout_weight="1"
+                        android:layout_height="wrap_content" android:orientation="vertical"
+                        android:gravity="center" android:padding="8dp">
+                        <TextView android:id="@+id/tv_stat3_value" android:layout_width="wrap_content"
+                            android:layout_height="wrap_content" android:textAppearance="@style/StatValue" android:text="-" />
+                        <TextView android:id="@+id/tv_stat3_label" android:layout_width="wrap_content"
+                            android:layout_height="wrap_content" android:textAppearance="@style/StatLabel" android:text="31-180 Days" />
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_chart"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            app:cardCornerRadius="18dp" app:cardElevation="0dp"
+            android:layout_marginBottom="16dp" android:visibility="gone">
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="vertical" android:padding="16dp">
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:text="COLLECTION BY OFFICER" android:textAppearance="@style/SectionLabel"
+                    android:paddingBottom="8dp" />
+                <ImageView android:id="@+id/iv_chart"
+                    android:layout_width="match_parent" android:layout_height="240dp"
+                    android:scaleType="fitCenter" android:adjustViewBounds="true" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <LinearLayout android:id="@+id/layout_export_buttons"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:visibility="gone"
+            android:layout_marginBottom="94dp">
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_export"
+                android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
+                android:text="@string/btn_export" android:layout_marginEnd="8dp"
+                app:cornerRadius="16dp" app:icon="@drawable/ic_export_report" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_share"
+                android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
+                android:text="@string/btn_share"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_marginStart="8dp"
+                app:cornerRadius="16dp" app:icon="@drawable/ic_share_nodes" />
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>

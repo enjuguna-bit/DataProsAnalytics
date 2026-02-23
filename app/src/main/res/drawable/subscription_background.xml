@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="22dp" />
+            <gradient
+                android:angle="320"
+                android:endColor="@color/fx_glass_surface_alt"
+                android:startColor="@color/fx_glass_surface" />
+            <stroke
+                android:width="1dp"
+                android:color="@color/fx_panel_stroke" />
+        </shape>
+    </item>
+
+    <item
+        android:left="-140dp"
+        android:right="100dp"
+        android:top="-190dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="22dp" />
+            <gradient
+                android:centerX="0.2"
+                android:centerY="0.1"
+                android:endColor="@android:color/transparent"
+                android:gradientRadius="320dp"
+                android:startColor="@color/fx_glow_tertiary"
+                android:type="radial" />
+        </shape>
+    </item>
+
+    <item
+        android:bottom="-140dp"
+        android:left="80dp"
+        android:right="-160dp"
+        android:top="140dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="22dp" />
+            <gradient
+                android:centerX="0.9"
+                android:centerY="0.9"
+                android:endColor="@android:color/transparent"
+                android:gradientRadius="280dp"
+                android:startColor="@color/fx_glow_secondary"
+                android:type="radial" />
+        </shape>
+    </item>
+</layer-list>
