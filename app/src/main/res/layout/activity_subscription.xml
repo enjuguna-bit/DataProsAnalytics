@@ -125,18 +125,18 @@
                     app:singleSelection="true">
 
                     <com.google.android.material.chip.Chip
-                        android:id="@+id/chipPlanOneHour"
-                        style="@style/Widget.MaterialComponents.Chip.Filter"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/subscription_plan_one_hour" />
-
-                    <com.google.android.material.chip.Chip
                         android:id="@+id/chipPlanSixHour"
                         style="@style/Widget.MaterialComponents.Chip.Filter"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/subscription_plan_six_hour" />
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chipPlanTwelveHour"
+                        style="@style/Widget.MaterialComponents.Chip.Filter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/subscription_plan_twelve_hour" />
 
                     <com.google.android.material.chip.Chip
                         android:id="@+id/chipPlanDaily"
@@ -152,6 +152,13 @@
                         android:layout_height="wrap_content"
                         android:checked="true"
                         android:text="@string/subscription_plan_weekly" />
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chipPlanMonthly"
+                        style="@style/Widget.MaterialComponents.Chip.Filter"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/subscription_plan_monthly" />
                 </com.google.android.material.chip.ChipGroup>
 
                 <TextView

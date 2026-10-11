@@ -68,14 +68,37 @@ def _build_preview_chart(pivot_rep: pd.DataFrame, chart_path: str) -> str:
         return ""
 
 
+def _read_tabular_file(input_path: str) -> pd.DataFrame:
+    file_ext = os.path.splitext(input_path)[1].lower()
+    csv_encodings = ("utf-8-sig", "utf-8", "latin1", "cp1252", "iso-8859-1")
+    read_order = ("csv", "excel") if file_ext == ".csv" else ("excel", "csv")
+    last_error: Exception | None = None
+
+    for reader in read_order:
+        if reader == "excel":
+            try:
+                return pd.read_excel(input_path)
+            except Exception as exc:
+                last_error = exc
+        else:
+            for encoding in csv_encodings:
+                try:
+                    return pd.read_csv(input_path, encoding=encoding)
+                except UnicodeDecodeError as exc:
+                    last_error = exc
+                    continue
+                except Exception as exc:
+                    last_error = exc
+                    break
+
+    raise ValueError(f"Unable to read input file as CSV or Excel: {last_error}")
+
+
 def run(input_path: str, output_dir: str) -> dict:
     """Process arrears data and generate executive Excel report."""
     os.makedirs(output_dir, exist_ok=True)
 
-    if input_path.lower().endswith(".csv"):
-        df = pd.read_csv(input_path)
-    else:
-        df = pd.read_excel(input_path)
+    df = _read_tabular_file(input_path)
 
     required_cols = ["FullNames", "PhoneNumber", "Arrears Amount", "DaysInArrears", "LoanBalance", "SalesRep"]
     df.columns = [str(c).strip() for c in df.columns]

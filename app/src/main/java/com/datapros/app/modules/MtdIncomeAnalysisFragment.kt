@@ -46,22 +46,22 @@ class MtdIncomeAnalysisFragment : BaseModuleFragment() {
     override fun bindStats(stats: JSONObject) {
         val day = stats.optInt("day_number", 1)
         val actual = stats.optDouble("total_actual_income", 0.0)
-        val expected = stats.optDouble("total_expected_income", 0.0)
+        val target = stats.optDouble("total_target_income", 0.0)
         val gap = stats.optDouble("total_income_gap", 0.0)
-        val onTrack = stats.optInt("on_track_count", 0)
+        val behind = stats.optInt("behind_count", 0)
         val totalPortfolios = stats.optInt("total_portfolios", 0)
 
         setStats(
-            v1 = "Day %d".format(day), l1 = "Analysis Day",
-            v2 = "KES %,.0f".format(actual), l2 = "Actual Income",
-            v3 = "KES %,.0f".format(expected), l3 = "Expected Income",
-            v4 = "%d/%d".format(onTrack, totalPortfolios), l4 = "On Track"
+            v1 = "Day %d".format(day),                         l1 = "Analysis Day",
+            v2 = "KES %,.0f".format(actual),                   l2 = "Actual Income",
+            v3 = "KES %,.0f".format(target),                   l3 = "TargetD%d".format(day),
+            v4 = "%d/%d Behind".format(behind, totalPortfolios), l4 = "Portfolio Status"
         )
 
         if (gap < 0) {
-            showStatus("Gap: KES %,.0f behind target".format(kotlin.math.abs(gap)))
+            showStatus("D/S: KES %,.0f behind TargetD%d".format(kotlin.math.abs(gap), day))
         } else {
-            showStatus("Gap: KES %,.0f above target".format(gap))
+            showStatus("D/S: KES %,.0f ahead of TargetD%d".format(gap, day))
         }
     }
 

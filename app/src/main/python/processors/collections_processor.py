@@ -18,6 +18,8 @@ from openpyxl.utils import get_column_letter
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
+from processors.tabular_io import read_tabular_file
+
 
 VALID_BUCKETS = ["1-15", "16-30", "31-180"]
 REQUIRED_COLUMNS_SOD = ["LoanId", "SalesRep", "CustomerName", "ArrearsAmount", "DaysInArrears"]
@@ -60,18 +62,7 @@ def _normalize_officer_names(df: pd.DataFrame) -> pd.DataFrame:
 def _read_input(file_path: str) -> pd.DataFrame:
     """Load and clean data from CSV/Excel."""
     try:
-        if file_path.lower().endswith(".csv"):
-            encodings = ["utf-8", "latin1", "cp1252", "iso-8859-1"]
-            for encoding in encodings:
-                try:
-                    df = pd.read_csv(file_path, encoding=encoding)
-                    break
-                except UnicodeDecodeError:
-                    continue
-            else:
-                df = pd.read_csv(file_path)
-        else:
-            df = pd.read_excel(file_path)
+        df = read_tabular_file(file_path, dtype=str)
 
         df.columns = df.columns.str.strip().str.title().str.replace(" ", "", regex=False)
 

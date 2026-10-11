@@ -1,10 +1,12 @@
-﻿<resources>
+<resources>
     <string name="app_name">DataPros Analytics</string>
 
     <!-- Bottom Navigation -->
     <string name="nav_arrears">Arrears</string>
     <string name="nav_dues">Dues</string>
     <string name="nav_collections">Collections</string>
+    <string name="nav_disbursement">Disbursement</string>
+    <string name="nav_loan_tracker">Loan Tracker</string>
     <string name="nav_dormant">Dormant</string>
     <string name="nav_branch">Branch</string>
     <string name="nav_recovery">Recovery</string>
@@ -17,6 +19,7 @@
     <string name="nav_sod_cr">SOD CR</string>
     <string name="nav_mtd_cr">MTD CR</string>
     <string name="nav_mtd_income">MTD Income</string>
+    <string name="nav_dcr_trend">DCR Trend</string>
 
     <!-- Common UI -->
     <string name="btn_select_file">Select File</string>
@@ -25,15 +28,24 @@
     <string name="btn_share">Share</string>
     <string name="no_file_selected">No file selected</string>
     <string name="file_selected">File: %1$s</string>
-    <string name="processing">Processing...</string>
+    <string name="processing">Processing…</string>
     <string name="done">Done!</string>
-    <string name="error_prefix">Error: %1$s</string>
     <string name="report_saved">Report saved to Downloads</string>
+
+    <!-- Status / error messages -->
+    <string name="report_ready">Report ready.</string>
+    <string name="error_prefix">Error: %1$s</string>
+    <string name="error_unknown">An unknown error occurred. Please try again.</string>
+    <string name="error_processing_failed">Processing failed. Check the file format and try again.</string>
+    <string name="error_no_xlsx_viewer">No app found to open Excel files. Install WPS Office or Microsoft Excel.</string>
+    <string name="share_report_chooser_title">Share Report via…</string>
 
     <!-- Module titles -->
     <string name="title_arrears">Arrears Dashboard</string>
     <string name="title_dues">Loan Dues Report</string>
     <string name="title_collections">Arrears Collected</string>
+    <string name="title_disbursement">Disbursement Report</string>
+    <string name="title_loan_tracker">Loan Week Tracker</string>
     <string name="title_dormant">Dormant Arrangements</string>
     <string name="title_branch">Branch Comparison</string>
     <string name="title_recovery">Recovery Center</string>
@@ -46,6 +58,8 @@
     <string name="title_sod_cr">SOD CR Per Portfolio</string>
     <string name="title_mtd_cr">MTD CR Per Portfolio</string>
     <string name="title_mtd_income">MTD Income Analysis</string>
+    <string name="title_dcr_trend">DCR Trend Analyser</string>
+    <string name="title_new_loans_arrears">New Loans in Arrears</string>
 
     <!-- Hub descriptions -->
     <string name="hub_recovery_subtitle">Core recovery workflows for arrears and dues movement.</string>
@@ -55,6 +69,8 @@
     <string name="hub_action_arrears">Executive arrears dashboard by bucket and sales rep.</string>
     <string name="hub_action_dues">Loan dues and arrears detail with branch and RO views.</string>
     <string name="hub_action_collections">Compare SOD vs current files and compute collections.</string>
+    <string name="hub_action_disbursement">Split names, normalize phones, and derive weekly and daily installments.</string>
+    <string name="hub_action_loan_tracker">Track loan age, expected balance, missed days, and catch-up amount using a disbursement report with built-in product logic.</string>
     <string name="hub_action_branch">Compare income, CR, and disbursement across branches.</string>
     <string name="hub_action_ro">Rank ROs by income, collection rate, and disbursement.</string>
     <string name="hub_action_mtd_pivot">Run pivot targets for new, MTD, and daily performance.</string>
@@ -63,6 +79,8 @@
     <string name="hub_action_mtd_cr">MTD collection rate analysis per portfolio with targets.</string>
     <string name="hub_action_mtd">Month-to-date unpaid dues and collection rate summary.</string>
     <string name="hub_action_mtd_income">Day-level income target analysis per portfolio.</string>
+    <string name="hub_action_dcr_trend">Compare morning and current CR snapshots with colour-coded trend commentary.</string>
+    <string name="hub_action_new_loans_arrears">Flag loans disbursed this month that are already appearing in arrears.</string>
 
     <!-- Collections specific -->
     <string name="label_select_sod">Select SOD (Start-of-Day) File</string>
@@ -70,7 +88,7 @@
     <string name="label_sod_file">SOD File: %1$s</string>
     <string name="label_current_file">Current File: %1$s</string>
 
-    <!-- Branch comparison specific -->
+    <!-- Branch / RO comparison file labels -->
     <string name="label_income_file">Income File: %1$s</string>
     <string name="label_cr_file">CR File: %1$s</string>
     <string name="label_disb_file">Disbursement File: %1$s</string>
@@ -78,9 +96,24 @@
     <string name="btn_cr">CR File</string>
     <string name="btn_collection">Collection File</string>
     <string name="btn_disb">Disbursement File</string>
+    <string name="label_select_morning">Morning Snapshot</string>
+    <string name="label_select_current_snapshot">Current Snapshot</string>
+    <string name="subtitle_loan_tracker">Use the disbursement report with built-in product logic to calculate current week, expected balance, and catch-up amount.</string>
+    <string name="subtitle_dcr_trend">Compare morning vs current CR snapshots and generate a threshold-based daily trend report.</string>
+    <string name="label_loan_tracker_report">DISBURSEMENT REPORT</string>
+    <string name="label_loan_tracker_logic">PRODUCT LOGIC</string>
+    <string name="loan_tracker_logic_note">Built in from the 2024 guide: loan sizes KES 3,000 to 49,000 in 1,000 steps, with 5, 7, 10, or 12 week terms.</string>
+    <string name="loan_tracker_ready">Loan tracker report ready for %1$s.</string>
+    <string name="loan_tracker_ready_with_errors">Loan tracker report ready for %1$s. %2$d row(s) need review.</string>
+
+    <!-- New Loans in Arrears file picker labels -->
+    <string name="nav_new_loans_arrears">Arrears Check</string>
+    <string name="subtitle_new_loans_arrears">Cross-reference this month\'s disbursements against the current arrears list to flag early defaults.</string>
+    <string name="btn_select_disbursement">Disbursement File</string>
+    <string name="btn_select_arrears">Arrears File</string>
 
     <!-- Subscription -->
-    <string name="menu_subscription">Subscription</string>
+    <string name="menu_subscription">Settings</string>
     <string name="subscription_title">Go Premium</string>
     <string name="subscription_subtitle">Pick a plan and pay securely with M-Pesa.</string>
     <string name="subscription_highlight">Instant activation on this device after confirmation.</string>
@@ -89,34 +122,80 @@
     <string name="subscription_phone_placeholder">0712345678</string>
     <string name="subscription_phone_helper">We use this number to verify your payment and activate premium.</string>
     <string name="subscription_step_plan">Step 2: Select plan</string>
-    <string name="subscription_plan_one_hour">1 Hour - KSH 60</string>
-    <string name="subscription_plan_six_hour">6 Hours - KSH 100</string>
+    <string name="subscription_plan_six_hour">6 Hours - KSH 60</string>
+    <string name="subscription_plan_twelve_hour">12 Hours - KSH 100</string>
     <string name="subscription_plan_daily">24 Hours - KSH 200</string>
     <string name="subscription_plan_weekly">Weekly - KSH 1,000</string>
+    <string name="subscription_plan_monthly">Monthly - KSH 3,000</string>
     <string name="subscription_plan_best_value">Best value</string>
     <string name="subscription_selected_plan">Selected plan</string>
     <string name="subscription_continue_payment">Continue to payment</string>
     <string name="subscription_check_status">Check active subscription</string>
     <string name="subscription_status_hint">If you paid recently, status may take a few minutes to update.</string>
     <string name="subscription_status_default">No active subscription found.</string>
-    <string name="subscription_loading_payment">Preparing payment page...</string>
-    <string name="subscription_loading_status">Checking subscription status...</string>
+    <string name="subscription_loading_payment">Preparing payment page…</string>
+    <string name="subscription_loading_status">Checking subscription status…</string>
     <string name="subscription_close">Close</string>
     <string name="subscription_phone_required">Enter your M-Pesa phone number above</string>
     <string name="subscription_phone_invalid">Enter a valid Kenyan phone number (e.g., 0712345678).</string>
     <string name="subscription_payment_opened">Payment page opened. Complete M-Pesa prompt on your phone.</string>
     <string name="subscription_payment_error">Unable to open payment page right now.</string>
     <string name="subscription_payment_pending">Payment processing. Check status again in a few minutes.</string>
-    <string name="subscription_active_plan_and_time">Active - %1$s plan. Paid until: %2$s</string>
+    <string name="subscription_active_plan_and_time">Active – %1$s plan. Paid until: %2$s</string>
     <string name="subscription_active_time_only">Active. Paid until: %1$s</string>
-    <string name="subscription_active_plan_only">Active - %1$s plan.</string>
+    <string name="subscription_active_plan_only">Active – %1$s plan.</string>
     <string name="subscription_active">Active subscription</string>
+    <string name="subscription_inactive_plan_and_time">Inactive. %1$s plan ended on %2$s.</string>
+    <string name="subscription_inactive_time_only">Inactive. Access ended on %1$s.</string>
+    <string name="subscription_inactive_plan_only">Inactive. %1$s plan is not active on this device.</string>
+    <string name="subscription_inactive">Inactive subscription</string>
     <string name="subscription_plan_format">%1$s plan</string>
+    <string name="subscription_sync_phone_hint">Enter the same M-Pesa phone number used to pay in BulkSMS2, then tap Check active subscription.</string>
 
     <!-- Free-tier usage limit -->
     <string name="usage_limit_title">Daily free limit reached</string>
     <string name="usage_limit_message">Free plan allows up to %1$d reports per day. Upgrade to continue.</string>
     <string name="usage_limit_upgrade">Upgrade</string>
     <string name="usage_limit_payment_pending">Payment processing. Please check subscription status.</string>
-</resources>
 
+    <!-- Settings screen -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_section_subscription">Subscription</string>
+    <string name="settings_subscription_desc">Manage your DataPros premium plan. Pay securely with M-Pesa and activate instantly on this device.</string>
+    <string name="settings_subscription_state_active">Active</string>
+    <string name="settings_subscription_state_inactive">Inactive</string>
+    <string name="settings_subscription_state_pending">Pending payment</string>
+    <string name="settings_subscription_status_loading">Checking latest subscription status...</string>
+    <string name="settings_subscription_paid_until">Paid until: %1$s</string>
+    <string name="settings_subscription_last_checked">Last checked: %1$s</string>
+    <string name="settings_refresh_subscription_status">Refresh Status</string>
+    <string name="settings_open_subscription">Manage Subscription</string>
+    <string name="settings_section_howto">How to Use DataPros</string>
+    <string name="settings_howto_intro">DataPros Analytics processes Excel (.xlsx) files exported from your MFI system and generates formatted reports.</string>
+    <string name="settings_guide_desc">The full user guide is bundled with the app so you can open it offline any time.</string>
+    <string name="settings_download_guide">Open Offline User Guide</string>
+    <string name="settings_guide_saved">Offline guide saved. Opening it now...</string>
+    <string name="settings_guide_saved_no_viewer">Offline guide saved, but no compatible app was found to open the DOCX file.</string>
+    <string name="settings_guide_missing">The offline user guide is missing from this build.</string>
+    <string name="guide_screen_eyebrow">Offline Guide</string>
+    <string name="guide_screen_title">DataPros User Guide</string>
+    <string name="guide_screen_subtitle">Read the bundled guide inside the app even when no office app is installed. You can also save a DOCX copy to your device.</string>
+    <string name="guide_save_docx_copy">Save DOCX Copy</string>
+    <string name="guide_content_unavailable">The bundled guide could not be loaded in this build.</string>
+    <string name="guide_copy_saved_downloads">DOCX copy saved to %1$s</string>
+    <string name="guide_copy_saved_local">DOCX copy saved to app storage: %1$s</string>
+    <string name="settings_howto_step1_title">1. Select Your File</string>
+    <string name="settings_howto_step1_body">Tap the module from the bottom nav or hub cards, then tap Select File and choose your Excel report from device storage.</string>
+    <string name="settings_howto_step2_title">2. Process the Report</string>
+    <string name="settings_howto_step2_body">Tap Process. The app analyses the file using built-in Python logic and displays a summary.</string>
+    <string name="settings_howto_step3_title">3. Export or Share</string>
+    <string name="settings_howto_step3_body">Tap Export Report to save to your Downloads folder, or tap Share to send via WhatsApp, Email, or any other app.</string>
+    <string name="settings_howto_collections_title">Collections Module</string>
+    <string name="settings_howto_collections_body">Requires two files: the Start-of-Day (SOD) file and the current file. Select each with the labelled buttons then press Process.</string>
+    <string name="settings_howto_loantracker_title">Loan Week Tracker</string>
+    <string name="settings_howto_loantracker_body">Uses the disbursement report with built-in 2024 product logic (KES 3,000-49,000, 5/7/10/12-week terms) to calculate weekly tracking metrics.</string>
+    <string name="settings_howto_branch_title">Branch Comparison</string>
+    <string name="settings_howto_branch_body">Upload separate Income, CR, and Disbursement files to compare KPIs across all branches in one consolidated report.</string>
+    <string name="settings_howto_premium_title">Premium Features</string>
+    <string name="settings_howto_premium_body">Some modules require a subscription. The free plan has limited daily reports. Upgrade via the Subscription section above.</string>
+</resources>

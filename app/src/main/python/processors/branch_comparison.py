@@ -19,12 +19,11 @@ from openpyxl.utils import get_column_letter
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
+from processors.tabular_io import read_tabular_file
+
 
 def _read_input(path: str) -> pd.DataFrame:
-    if path.lower().endswith(".csv"):
-        df = pd.read_csv(path, dtype=str)
-    else:
-        df = pd.read_excel(path, dtype=str)
+    df = read_tabular_file(path, dtype=str)
     df.columns = [str(c).strip() for c in df.columns]
     return df
 

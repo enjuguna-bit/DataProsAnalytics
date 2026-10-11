@@ -25,6 +25,12 @@ class PortfolioHubFragment : MenuHubFragment() {
             subtitleRes = R.string.hub_action_mtd_cr,
             iconRes = R.drawable.ic_nav_branch,
             destinationId = R.id.nav_mtd_cr
+        ),
+        HubAction(
+            titleRes = R.string.nav_dcr_trend,
+            subtitleRes = R.string.hub_action_dcr_trend,
+            iconRes = R.drawable.ic_nav_collections,
+            destinationId = R.id.nav_dcr_trend
         )
     )
 }

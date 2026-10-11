@@ -1,4 +1,4 @@
-﻿package com.datapros.app.modules
+package com.datapros.app.modules
 
 import android.app.Activity
 import android.content.Intent
@@ -44,17 +44,17 @@ class BranchComparisonFragment : Fragment(R.layout.fragment_branch) {
 
         incomeLauncher = registerPicker { path ->
             incomePath = path
-            requireView().findViewById<TextView>(R.id.tv_income_file).text = path.substringAfterLast('/')
+            view?.findViewById<TextView>(R.id.tv_income_file)?.text = path.substringAfterLast('/')
             updateProcessButton()
         }
         crLauncher = registerPicker { path ->
             crPath = path
-            requireView().findViewById<TextView>(R.id.tv_cr_file).text = path.substringAfterLast('/')
+            view?.findViewById<TextView>(R.id.tv_cr_file)?.text = path.substringAfterLast('/')
             updateProcessButton()
         }
         disbLauncher = registerPicker { path ->
             disbPath = path
-            requireView().findViewById<TextView>(R.id.tv_disb_file).text = path.substringAfterLast('/')
+            view?.findViewById<TextView>(R.id.tv_disb_file)?.text = path.substringAfterLast('/')
             updateProcessButton()
         }
     }
@@ -71,15 +71,10 @@ class BranchComparisonFragment : Fragment(R.layout.fragment_branch) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        view.findViewById<MaterialButton>(R.id.btn_income).setOnClickListener {
-            incomeLauncher.launch(filePicker())
-        }
-        view.findViewById<MaterialButton>(R.id.btn_cr).setOnClickListener {
-            crLauncher.launch(filePicker())
-        }
-        view.findViewById<MaterialButton>(R.id.btn_disb).setOnClickListener {
-            disbLauncher.launch(filePicker())
-        }
+
+        view.findViewById<MaterialButton>(R.id.btn_income).setOnClickListener { incomeLauncher.launch(filePicker()) }
+        view.findViewById<MaterialButton>(R.id.btn_cr).setOnClickListener    { crLauncher.launch(filePicker()) }
+        view.findViewById<MaterialButton>(R.id.btn_disb).setOnClickListener  { disbLauncher.launch(filePicker()) }
         view.findViewById<MaterialButton>(R.id.btn_process).setOnClickListener { process() }
         view.findViewById<MaterialButton>(R.id.btn_export).setOnClickListener  { openReport() }
         view.findViewById<MaterialButton>(R.id.btn_share).setOnClickListener   { shareReport() }
@@ -98,15 +93,10 @@ class BranchComparisonFragment : Fragment(R.layout.fragment_branch) {
     private fun filePicker(): Intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
         addCategory(Intent.CATEGORY_OPENABLE)
         type = "*/*"
-        putExtra(Intent.EXTRA_MIME_TYPES, arrayOf(
-            "text/csv",
-            "application/vnd.ms-excel",
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        ))
     }
 
     private fun updateProcessButton() {
-        requireView().findViewById<MaterialButton>(R.id.btn_process).isEnabled =
+        view?.findViewById<MaterialButton>(R.id.btn_process)?.isEnabled =
             incomePath != null && crPath != null && disbPath != null
     }
 
@@ -117,11 +107,20 @@ class BranchComparisonFragment : Fragment(R.layout.fragment_branch) {
         if (!UsageGate.ensureAllowed(this)) return
         setLoading(true)
         lifecycleScope.launch {
-            val result = withContext(Dispatchers.IO) {
-                PythonRunner.runBranch(inc, cr, disb, FileUtils.outputDir(requireContext()))
+            try {
+                val result = withContext(Dispatchers.IO) {
+                    PythonRunner.runBranch(inc, cr, disb, FileUtils.outputDir(requireContext()))
+                }
+                if (isAdded && view != null) handleResult(result)
+            } catch (e: Exception) {
+                if (isAdded && view != null) {
+                    val msg = e.message ?: "Branch processing failed"
+                    showStatus("Error: $msg")
+                    Snackbar.make(requireView(), "Error: $msg", Snackbar.LENGTH_LONG).show()
+                }
+            } finally {
+                if (isAdded && view != null) setLoading(false)
             }
-            setLoading(false)
-            handleResult(result)
         }
     }
 
@@ -130,19 +129,16 @@ class BranchComparisonFragment : Fragment(R.layout.fragment_branch) {
             UsageGate.recordSuccess(this)
             outputFile = result.optString("output_file")
 
-            val chartFile = result.optString("chart_file")
-            if (chartFile.isNotEmpty()) {
+            result.optString("chart_file").takeIf { it.isNotEmpty() }?.let { chartFile ->
                 BitmapFactory.decodeFile(chartFile)?.let { bmp ->
                     requireView().findViewById<ImageView>(R.id.iv_chart).setImageBitmap(bmp)
                     requireView().findViewById<MaterialCardView>(R.id.card_chart).apply {
-                        isVisible = true
-                        UiMotion.reveal(this)
+                        isVisible = true; UiMotion.reveal(this)
                     }
                 }
             }
 
-            val stats = result.optJSONObject("stats")
-            if (stats != null) {
+            result.optJSONObject("stats")?.let { stats ->
                 requireView().apply {
                     findViewById<TextView>(R.id.tv_stat1_value).text =
                         stats.optInt("num_branches", 0).toString()
@@ -151,15 +147,13 @@ class BranchComparisonFragment : Fragment(R.layout.fragment_branch) {
                     findViewById<TextView>(R.id.tv_stat3_value).text =
                         "KES %,.0f".format(stats.optDouble("total_disbursement", 0.0))
                     findViewById<MaterialCardView>(R.id.card_stats).apply {
-                        isVisible = true
-                        UiMotion.reveal(this)
+                        isVisible = true; UiMotion.reveal(this)
                     }
                 }
             }
 
             requireView().findViewById<View>(R.id.layout_export_buttons).apply {
-                isVisible = true
-                UiMotion.reveal(this)
+                isVisible = true; UiMotion.reveal(this)
             }
             showStatus("Branch report ready.")
         } else {
@@ -170,7 +164,7 @@ class BranchComparisonFragment : Fragment(R.layout.fragment_branch) {
     }
 
     private fun setLoading(loading: Boolean) {
-        requireView().apply {
+        view?.apply {
             findViewById<LinearProgressIndicator>(R.id.progress_bar).isVisible = loading
             val tv = findViewById<TextView>(R.id.tv_status)
             tv.isVisible = loading
@@ -180,25 +174,20 @@ class BranchComparisonFragment : Fragment(R.layout.fragment_branch) {
     }
 
     private fun showStatus(msg: String) {
-        requireView().apply {
+        view?.apply {
             val tv = findViewById<TextView>(R.id.tv_status)
-            tv.text    = msg
-            tv.isVisible = true
+            tv.text = msg; tv.isVisible = true
         }
     }
 
     private fun openReport() {
         val path = outputFile ?: return
-        try { startActivity(FileUtils.openFile(requireContext(), path)) }
-        catch (e: Exception) {
-            Snackbar.make(requireView(), "No app found to open .xlsx files", Snackbar.LENGTH_LONG).show()
-        }
+        runCatching { startActivity(FileUtils.openFile(requireContext(), path)) }
+            .onFailure { Snackbar.make(requireView(), "No app found to open .xlsx files", Snackbar.LENGTH_LONG).show() }
     }
 
     private fun shareReport() {
         val path = outputFile ?: return
-        startActivity(Intent.createChooser(
-            FileUtils.shareFile(requireContext(), path), "Share Report via..."))
+        startActivity(Intent.createChooser(FileUtils.shareFile(requireContext(), path), "Share Report via…"))
     }
 }
-

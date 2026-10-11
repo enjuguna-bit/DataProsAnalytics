@@ -40,6 +40,16 @@
         android:label="@string/title_collections" />
 
     <fragment
+        android:id="@+id/nav_disbursement"
+        android:name="com.datapros.app.modules.DisbursementFragment"
+        android:label="@string/title_disbursement" />
+
+    <fragment
+        android:id="@+id/nav_loan_tracker"
+        android:name="com.datapros.app.modules.LoanTrackerFragment"
+        android:label="@string/title_loan_tracker" />
+
+    <fragment
         android:id="@+id/nav_dormant"
         android:name="com.datapros.app.modules.DormantFragment"
         android:label="@string/title_dormant" />
@@ -78,5 +88,15 @@
         android:id="@+id/nav_mtd_income"
         android:name="com.datapros.app.modules.MtdIncomeAnalysisFragment"
         android:label="@string/title_mtd_income" />
+
+    <fragment
+        android:id="@+id/nav_dcr_trend"
+        android:name="com.datapros.app.modules.DcrTrendAnalyserFragment"
+        android:label="@string/title_dcr_trend" />
+
+    <fragment
+        android:id="@+id/nav_new_loans_arrears"
+        android:name="com.datapros.app.modules.NewLoansInArrearsFragment"
+        android:label="@string/title_new_loans_arrears" />
 
 </navigation>

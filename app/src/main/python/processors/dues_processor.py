@@ -149,14 +149,45 @@ class PremiumLoanReportGenerator:
             if os.path.getsize(file_path) > max_size:
                 return False, f"File size exceeds {self.config['max_file_size_mb']}MB limit"
 
-            valid_extensions = [".csv", ".xlsx", ".xls"]
             file_ext = os.path.splitext(file_path)[1].lower()
-            if file_ext not in valid_extensions:
-                return False, f"Invalid file type. Supported: {', '.join(valid_extensions)}"
+            if file_ext and file_ext not in {".csv", ".xlsx", ".xls"}:
+                logger.warning(
+                    "Unrecognised extension '%s'; attempting automatic CSV/Excel detection.",
+                    file_ext,
+                )
 
             return True, "File validated successfully"
         except Exception as exc:
             return False, f"Validation error: {exc}"
+
+    def _load_tabular_data(self, file_path: str) -> pd.DataFrame:
+        file_ext = os.path.splitext(file_path)[1].lower()
+        csv_encodings = ("utf-8", "latin-1", "iso-8859-1", "cp1252")
+        read_order = ("csv", "excel") if file_ext == ".csv" else ("excel", "csv")
+        last_error: Exception | None = None
+
+        for reader in read_order:
+            if reader == "excel":
+                try:
+                    df = pd.read_excel(file_path)
+                    logger.info("Loaded Excel file")
+                    return df
+                except Exception as exc:
+                    last_error = exc
+            else:
+                for encoding in csv_encodings:
+                    try:
+                        df = pd.read_csv(file_path, encoding=encoding)
+                        logger.info("Loaded CSV with encoding: %s", encoding)
+                        return df
+                    except UnicodeDecodeError as exc:
+                        last_error = exc
+                        continue
+                    except Exception as exc:
+                        last_error = exc
+                        break
+
+        raise ValueError(f"Unable to read input file as CSV or Excel: {last_error}")
 
     def load_data(self, file_path: str) -> bool:
         try:
@@ -165,18 +196,7 @@ class PremiumLoanReportGenerator:
                 logger.error(msg)
                 return False
 
-            file_ext = os.path.splitext(file_path)[1].lower()
-            if file_ext == ".csv":
-                self.df = None
-                for encoding in ("utf-8", "latin-1", "iso-8859-1", "cp1252"):
-                    try:
-                        self.df = pd.read_csv(file_path, encoding=encoding)
-                        logger.info("Loaded CSV with encoding: %s", encoding)
-                        break
-                    except UnicodeDecodeError:
-                        continue
-            else:
-                self.df = pd.read_excel(file_path)
+            self.df = self._load_tabular_data(file_path)
 
             if self.df is None or self.df.empty:
                 logger.error("Input file is empty or unreadable")
@@ -200,6 +220,8 @@ class PremiumLoanReportGenerator:
         numeric_patterns = ("amount", "arrears", "balance", "due", "paid", "installment")
         for col in self.df.columns:
             col_l = str(col).lower()
+            if "date" in col_l:
+                continue
             if any(pattern in col_l for pattern in numeric_patterns):
                 self.df[col] = (
                     self.df[col]
@@ -258,6 +280,10 @@ class PremiumLoanReportGenerator:
             denom = pd.to_numeric(self.df["Total Installments"], errors="coerce").replace(0, pd.NA)
             numer = pd.to_numeric(self.df["Installment"], errors="coerce")
             self.df["Completion %"] = ((numer / denom) * 100).fillna(0).round(1)
+        elif "Completion %" not in self.df.columns and "Collection Rate (%)" in self.df.columns:
+            self.df["Completion %"] = pd.to_numeric(
+                self.df["Collection Rate (%)"], errors="coerce"
+            ).fillna(0).round(1)
 
         if "Due Date" in self.df.columns:
             parsed = pd.to_datetime(self.df["Due Date"], errors="coerce")
@@ -284,18 +310,19 @@ class PremiumLoanReportGenerator:
                 "Branch",
             ]
 
+            # Accept both the raw dues export and the SOD CR-style portfolio export.
             column_variations = {
-                "Client Name": ["FullNames", "Name", "Client Name", "Client", "Customer Name", "Customer", "ClientName"],
+                "Client Name": ["FullNames", "Full Name", "FullName", "Name", "Client Name", "Client", "Customer Name", "Customer", "ClientName"],
                 "Phone": ["Phone", "PhoneNumber", "Phone Number", "Mobile", "Telephone", "Contact", "PhoneNo", "Phone No"],
                 "Installment": ["Installment", "InstallmentNo", "Installment No", "Inst No", "InstNo", "Inst", "Installment Number"],
-                "Amount Due": ["Amount Due", "AmountDue", "Due Amount", "Due", "Total Due"],
-                "Arrears": ["Arrears", "Arrear", "Outstanding", "Balance Due"],
-                "Amount Paid": ["Amount Paid", "Paid", "AmountPaid", "Payment", "Amount Received"],
-                "Loan Balance": ["Loan Balance", "LoanBalance", "Balance", "Remaining Balance", "Outstanding Balance"],
-                "Field Officer": ["Field Officer", "FieldOfficer", "Officer", "Agent", "Loan Officer", "Account Manager", "SalesRep", "RO"],
-                "Loan ID": ["Loan ID", "LoanID", "Loan No", "Loan Number", "Loan", "Account Number", "LoanId"],
+                "Amount Due": ["Amount Due", "AmountDue", "Due Amount", "Due", "Total Due", "Total Amount", "TotalAmount"],
+                "Arrears": ["Arrears", "Arrear", "Outstanding", "Outstanding Amount", "OutstandingAmount", "Balance Due"],
+                "Amount Paid": ["Amount Paid", "Paid Amount", "PaidAmount", "Paid", "AmountPaid", "Payment", "Amount Received"],
+                "Loan Balance": ["Loan Balance", "LoanBalance", "Balance", "Remaining Balance", "Outstanding Balance", "Outstanding Amount", "OutstandingAmount"],
+                "Field Officer": ["Field Officer", "FieldOfficer", "Full Name", "FullName", "Officer", "Agent", "Loan Officer", "Sales Rep", "SalesRep", "Account Manager", "RO"],
+                "Loan ID": ["Loan ID", "LoanID", "Loan No", "Loan Number", "Loan", "Account Number", "LoanId", "#ID", "ID"],
                 "Due Date": ["Due Date", "DueDate", "Payment Date", "Date Due", "Next Payment", "Payment Due"],
-                "Branch": ["Branch", "Office", "Region"],
+                "Branch": ["Branch", "Branch Name", "BranchName", "UnitTitle", "Unit Title", "Region"],
             }
 
             new_df = pd.DataFrame(index=self.df.index)

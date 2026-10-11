@@ -25,6 +25,18 @@ class RecoveryHubFragment : MenuHubFragment() {
             subtitleRes = R.string.hub_action_collections,
             iconRes = R.drawable.ic_nav_collections,
             destinationId = R.id.nav_collections
+        ),
+        HubAction(
+            titleRes = R.string.nav_disbursement,
+            subtitleRes = R.string.hub_action_disbursement,
+            iconRes = R.drawable.ic_export_report,
+            destinationId = R.id.nav_disbursement
+        ),
+        HubAction(
+            titleRes = R.string.nav_loan_tracker,
+            subtitleRes = R.string.hub_action_loan_tracker,
+            iconRes = R.drawable.ic_status_orbit,
+            destinationId = R.id.nav_loan_tracker
         )
     )
 }

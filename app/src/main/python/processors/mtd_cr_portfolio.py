@@ -19,6 +19,8 @@ from openpyxl.utils import get_column_letter
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
+from processors.tabular_io import read_tabular_file
+
 
 DEFAULT_TARGET_CR = 93
 
@@ -40,17 +42,7 @@ TARGET_CR_BY_NAME: Dict[str, int] = {
 
 
 def _read_input(path: str) -> pd.DataFrame:
-    if path.lower().endswith(".csv"):
-        last_error = None
-        for enc in ("utf-8-sig", "utf-8", "latin1", "cp1252", "iso-8859-1"):
-            try:
-                return pd.read_csv(path, dtype=str, encoding=enc)
-            except Exception as exc:
-                last_error = exc
-        raise ValueError(f"Unable to read CSV file: {last_error}")
-    if path.lower().endswith(".xlsx") or path.lower().endswith(".xls"):
-        return pd.read_excel(path, dtype=str)
-    raise ValueError("Unsupported file type. Please upload CSV or Excel data.")
+    return read_tabular_file(path, dtype=str)
 
 
 def _normalize_header(name: str) -> str:

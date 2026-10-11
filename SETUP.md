@@ -6,18 +6,18 @@
 |------|---------|----------|
 | Android Studio | Hedgehog 2023.1.1+ | https://developer.android.com/studio |
 | JDK | 17 (bundled with Android Studio) | — |
-| Python | 3.8 exactly | https://www.python.org/downloads/release/python-3810/ |
+| Python | 3.11.x | https://www.python.org/downloads/release/python-3119/ |
 | Android SDK | API 34 | Via Android Studio SDK Manager |
 
-> **Important:** Chaquopy requires CPython 3.8. Install it separately even if you have 3.x already.
+> **Important:** This project is currently configured for CPython 3.11 in `app/build.gradle`.
 
 ---
 
-## Step 1 – Install Python 3.8
+## Step 1 – Install Python 3.11
 
-1. Download Python 3.8 from https://www.python.org/downloads/release/python-3810/
+1. Download Python 3.11 from https://www.python.org/downloads/release/python-3119/
 2. Run installer – check **"Add Python to PATH"**
-3. Verify: open cmd → `py -3.8 --version` → should print `Python 3.8.x`
+3. Verify: open cmd → `py -3.11 --version` → should print `Python 3.11.x`
 
 ---
 
@@ -39,20 +39,35 @@ Replace `YOUR_NAME` with your Windows username.
 
 ---
 
-## Step 4 – Tell Chaquopy where Python 3.8 is
+## Step 4 – Tell Chaquopy where Python 3.11 is
 
-In `app/build.gradle`, find:
-```gradle
-buildPython "python3"
+Add this to `local.properties` (recommended) or set it as an environment variable:
+```properties
+DATAPROS_BUILD_PYTHON=C\:\\Users\\USER\\AppData\\Local\\Programs\\Python\\Python311\\python.exe
 ```
-Change to the exact path of your Python 3.8 executable, e.g.:
-```gradle
-buildPython "C:/Users/USER/AppData/Local/Programs/Python/Python38/python.exe"
-```
+
+If not set, Gradle will fall back to `python` on your PATH.
 
 ---
 
-## Step 5 – Build the APK
+## Step 5 – Configure release signing securely
+
+Do **not** store signing secrets in source-controlled files.
+
+Add these values to your local `local.properties` (or inject them in CI as project/environment properties):
+
+```properties
+MYAPP_UPLOAD_STORE_FILE=C\:\\path\\to\\your-release-keystore.jks
+MYAPP_UPLOAD_KEY_ALIAS=your_key_alias
+MYAPP_UPLOAD_STORE_PASSWORD=your_store_password
+MYAPP_UPLOAD_KEY_PASSWORD=your_key_password
+```
+
+If these values are missing, release signing is skipped by design in `app/build.gradle`.
+
+---
+
+## Step 6 – Build the APK
 
 ### Debug APK (for testing):
 ```
@@ -72,7 +87,7 @@ Look for `app-universal-debug.apk` in the outputs folder.
 
 ---
 
-## Step 6 – Install on Android device
+## Step 7 – Install on Android device
 
 Option A – USB:
 ```
@@ -134,7 +149,7 @@ or **Share** to send via WhatsApp/email.
 
 | Problem | Fix |
 |---------|-----|
-| Gradle sync fails on Chaquopy | Ensure Python 3.8 path in `build.gradle` is correct |
+| Gradle sync fails on Chaquopy | Ensure Python 3.11 path in `build.gradle` is correct |
 | `No module named pandas` | Chaquopy pip install failed; check internet during first build |
 | APK installs but crashes on launch | Check `logcat` in Android Studio for PyException |
 | File picker shows nothing | Grant storage permission in phone Settings → Apps → DataPros |

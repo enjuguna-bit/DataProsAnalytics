@@ -1,9 +1,10 @@
-package com.datapros.app
+﻿package com.datapros.app
 
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.NavigationUI
@@ -12,11 +13,16 @@ import com.datapros.app.billing.SubscriptionHelper
 import com.datapros.app.databinding.ActivityMainBinding
 import com.datapros.app.utils.UiMotion
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
     private lateinit var navController: NavController
+
+    // Track the last animated destination so rapid navigation doesn't re-trigger
+    // the same animation twice (e.g. fast taps on the same nav item).
+    private var lastAnimatedDestId: Int = -1
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,25 +39,33 @@ class MainActivity : AppCompatActivity() {
         val bottomNav: BottomNavigationView = binding.bottomNav
         bottomNav.setupWithNavController(navController)
         UiMotion.bindPress(bottomNav)
-        animateScreenEntry()
 
-        // Update toolbar title when destination changes
+        lifecycleScope.launch {
+            SubscriptionHelper.refreshSubscriptionStatus(this@MainActivity, forceRefresh = false)
+        }
+
         navController.addOnDestinationChangedListener { _, destination, _ ->
             supportActionBar?.title = destination.label ?: getString(R.string.app_name)
-            animateScreenEntry()
+            // Only animate when the destination actually changes to avoid stutter
+            // when the same item is re-tapped.
+            if (destination.id != lastAnimatedDestId) {
+                lastAnimatedDestId = destination.id
+                animateScreenEntry()
+            }
         }
     }
 
     private fun animateScreenEntry() {
-        binding.navHostFragment.apply {
-            alpha = 0f
-            translationY = 20f
-            animate()
-                .alpha(1f)
-                .translationY(0f)
-                .setDuration(280L)
-                .start()
-        }
+        binding.navHostFragment
+            .animate()
+            .alpha(1f)
+            .translationY(0f)
+            .setDuration(260L)
+            .withStartAction {
+                binding.navHostFragment.alpha = 0f
+                binding.navHostFragment.translationY = 16f
+            }
+            .start()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -61,7 +75,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if (item.itemId == R.id.action_subscription) {
-            SubscriptionHelper.launch(this)
+            startActivity(android.content.Intent(this, SettingsActivity::class.java))
             return true
         }
         return NavigationUI.onNavDestinationSelected(item, navController) ||

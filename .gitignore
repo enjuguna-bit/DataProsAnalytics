@@ -12,6 +12,24 @@ local.properties
 
 # OS
 .DS_Store
-Thumbs.db# Python cache
+Thumbs.db
+
+# Python cache
 __pycache__/
 *.pyc
+app/src/main/python/**/__pycache__/
+
+# Local release/build artifacts
+*.apk
+*.aab
+*.log
+hs_err_pid*.log
+mapping.txt
+build_output.txt
+check.txt
+snip.txt
+tmp/
+
+# Local IDE settings and source data
+.vscode/
+*.xlsx

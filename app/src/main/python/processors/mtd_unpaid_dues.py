@@ -2,6 +2,7 @@
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+from processors.tabular_io import read_tabular_file
 from openpyxl import load_workbook
 from openpyxl.drawing.image import Image
 from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
@@ -10,7 +11,6 @@ import numpy as np
 import os
 import sys
 import argparse
-import builtins
 import json
 import logging
 import subprocess
@@ -32,7 +32,7 @@ def select_file():
         import tkinter as tk
         from tkinter import filedialog
     except ImportError:
-        print("âŒ GUI libraries not available. Use command-line arguments instead.")
+        print("GUI libraries not available. Use command-line arguments instead.")
         sys.exit(1)
 
     root = tk.Tk()
@@ -52,10 +52,7 @@ def load_and_clean_data(filepath):
         raise FileNotFoundError(f"The file '{filepath}' was not found.")
 
     try:
-        if filepath.lower().endswith('.csv'):
-            df = pd.read_csv(filepath, dtype=str)
-        else:
-            df = pd.read_excel(filepath, dtype=str)
+        df = read_tabular_file(filepath, dtype=str)
     except Exception as e:
         raise Exception(f"Error reading file: {e}")
 
@@ -96,7 +93,7 @@ def load_and_clean_data(filepath):
     essential_columns = ["PhoneNumber", "FullNames", "Arrears"]
     for col in essential_columns:
         if col not in df.columns:
-            print(f"âš ï¸  Warning: Missing essential column '{col}'. Creating with default values.")
+            print(f"Warning: Missing essential column '{col}'. Creating with default values.")
             df[col] = "" if col in ["PhoneNumber", "FullNames"] else 0
 
     if "FundedAmount" not in df.columns:
@@ -126,7 +123,7 @@ def load_and_clean_data(filepath):
     # Remove completely empty rows
     df = df.dropna(how='all')
 
-    print(f"âœ… Loaded {len(df)} records with {df['PhoneNumber'].nunique()} unique customers.")
+    print(f"Loaded {len(df)} records with {df['PhoneNumber'].nunique()} unique customers.")
     return df
 
 def load_config(path: str = "premium_config.json"):
@@ -136,13 +133,13 @@ def load_config(path: str = "premium_config.json"):
         if p.exists():
             with p.open() as f:
                 cfg = json.load(f)
-                print(f"âœ… Loaded config from {path}")
+                print(f"Loaded config from {path}")
                 return cfg
         else:
-            print(f"âš ï¸  Config file {path} not found. Using defaults.")
+            print(f"Config file {path} not found. Using defaults.")
             return {}
     except Exception as e:
-        print(f"âš ï¸  Failed to load config {path}: {e}")
+        print(f"Failed to load config {path}: {e}")
         return {}
 
 # =========================================================
@@ -236,7 +233,7 @@ def calculate_risk_metrics(df, config: dict = None):
     customer_risk = customer_risk.sort_values(by="RiskScore", ascending=False).reset_index(drop=True)
 
     # Log results
-    print(f"âœ… Risk calculation complete: {len(customer_risk)} customers categorized")
+    print(f"Risk calculation complete: {len(customer_risk)} customers categorized")
     if len(customer_risk) > 0:
         high = (customer_risk['RiskCategory'] == 'High Risk').sum()
         medium = (customer_risk['RiskCategory'] == 'Medium Risk').sum()
@@ -441,7 +438,7 @@ def make_top10_labels(customer_risk, wrap_width: int = 30):
     return top10[["DisplayName", "DisplayNameWrapped", "RiskScore"]]
 
 
-def generate_charts(customer_risk, officer_arrears, arrears_by_inst, wb, config: dict = None):
+def generate_charts(customer_risk, officer_arrears, arrears_by_inst, wb, config: dict = None, output_dir: str = ""):
     """Generate charts with error handling."""
     
     if config is None:
@@ -467,7 +464,7 @@ def generate_charts(customer_risk, officer_arrears, arrears_by_inst, wb, config:
                     plt.text(bar.get_x() + bar.get_width()/2, height, f"{int(height):,}",
                             ha='center', va='bottom', fontsize=8)
                 plt.tight_layout()
-                plt.savefig("chart_arrears.png", dpi=CHART_DPI)
+                plt.savefig(os.path.join(output_dir, "chart_arrears.png"), dpi=CHART_DPI)
                 plt.close()
 
         # 2. Arrears by Installment
@@ -478,7 +475,7 @@ def generate_charts(customer_risk, officer_arrears, arrears_by_inst, wb, config:
             plt.xlabel("Installment Number")
             plt.ylabel("Arrears Amount")
             plt.tight_layout()
-            plt.savefig("chart_age.png", dpi=CHART_DPI)
+            plt.savefig(os.path.join(output_dir, "chart_age.png"), dpi=CHART_DPI)
             plt.close()
 
         # 3. Top 10 High Risk
@@ -491,7 +488,7 @@ def generate_charts(customer_risk, officer_arrears, arrears_by_inst, wb, config:
                 plt.title("Top 10 Highest Risk Customers", fontsize=12, fontweight='bold')
                 plt.gca().invert_yaxis()
                 plt.tight_layout()
-                plt.savefig("chart_top10.png", dpi=CHART_DPI)
+                plt.savefig(os.path.join(output_dir, "chart_top10.png"), dpi=CHART_DPI)
                 plt.close()
 
         # 4. Risk Distribution Pie Chart - Enhanced with Officer Breakdown
@@ -575,7 +572,7 @@ def generate_charts(customer_risk, officer_arrears, arrears_by_inst, wb, config:
                             if count > 0:
                                 risk_arrears = customer_risk[customer_risk["RiskCategory"] == risk]["Arrears"].sum()
                                 risk_arrears_percent = (risk_arrears / customer_risk["Arrears"].sum() * 100)
-                                legend_text += f"â— {risk}: {count} customers\n"
+                                legend_text += f"- {risk}: {count} customers\n"
                                 legend_text += f"  {risk_arrears:,.0f} arrears ({risk_arrears_percent:.1f}%)\n\n"
 
                         ax_info.text(0.05, 0.35, legend_text, transform=ax_info.transAxes,
@@ -583,7 +580,7 @@ def generate_charts(customer_risk, officer_arrears, arrears_by_inst, wb, config:
                                    bbox=dict(boxstyle='round,pad=0.5', facecolor='white', alpha=0.9))
 
                         plt.tight_layout()
-                        plt.savefig("chart_pie.png", dpi=CHART_DPI, bbox_inches='tight')
+                        plt.savefig(os.path.join(output_dir, "chart_pie.png"), dpi=CHART_DPI, bbox_inches='tight')
                         plt.close()
                 else:
                     # Simple pie chart if no high risk data
@@ -607,7 +604,7 @@ def generate_charts(customer_risk, officer_arrears, arrears_by_inst, wb, config:
                                 fontsize=14, fontweight='bold', pad=20)
 
                     plt.tight_layout()
-                    plt.savefig("chart_pie.png", dpi=CHART_DPI, bbox_inches='tight')
+                    plt.savefig(os.path.join(output_dir, "chart_pie.png"), dpi=CHART_DPI, bbox_inches='tight')
                     plt.close()
 
         # Insert charts into workbook
@@ -619,15 +616,16 @@ def generate_charts(customer_risk, officer_arrears, arrears_by_inst, wb, config:
             "chart_high_risk_by_officer.png": ("High Risk Summary", "F2")
         }
 
-        for chart_file, (sheet_name, cell) in chart_files.items():
+        for chart_file_name, (sheet_name, cell) in chart_files.items():
+            chart_file = os.path.join(output_dir, chart_file_name) if output_dir else chart_file_name
             if os.path.exists(chart_file) and sheet_name in wb.sheetnames:
                 try:
                     wb[sheet_name].add_image(Image(chart_file), cell)
                 except Exception as e:
-                    print(f"âš ï¸  Could not insert chart {chart_file}: {e}")
+                    print(f"⚠️  Could not insert chart {chart_file}: {e}")
 
     except Exception as e:
-        print(f"âš ï¸  Chart generation warning: {e}")
+        print(f"⚠️  Chart generation warning: {e}")
 
 # =========================================================
 # 6. FUNCTION: Excel Formatting
@@ -707,16 +705,16 @@ def format_excel_workbook(filepath):
                             )
 
         wb.save(filepath)
-        print("âœ… Excel formatting applied")
+        print("Excel formatting applied")
 
     except Exception as e:
-        print(f"âš ï¸  Warning: Excel formatting failed: {e}")
+        print(f"Warning: Excel formatting failed: {e}")
 
 def open_output_location(path: str) -> bool:
     """Opens the output file location in file explorer."""
     p = Path(path)
     if not p.exists():
-        print(f"âš ï¸  Output file does not exist: {path}")
+        print(f"Output file does not exist: {path}")
         return False
     
     try:
@@ -728,7 +726,7 @@ def open_output_location(path: str) -> bool:
             subprocess.run(['xdg-open', str(p.parent)], check=False)
         return True
     except Exception as e:
-        print(f"âš ï¸  Could not open output location: {e}")
+        print(f"Could not open output location: {e}")
         return False
 
 # =========================================================
@@ -755,7 +753,7 @@ def main():
     # Select input file
     input_file = args.input if args.input else select_file()
     if not input_file:
-        print("âŒ No file selected. Exiting.")
+        print("No file selected. Exiting.")
         return
 
     # Determine output file
@@ -765,46 +763,46 @@ def main():
     )
 
     print(f"\n--- Starting Analysis for {os.path.basename(input_file)} ---\n")
-    print(f"ðŸ” Debug: Input file: {input_file}")
-    print(f"ðŸ” Debug: Output file: {output_file}")
+    print(f"Debug: Input file: {input_file}")
+    print(f"Debug: Output file: {output_file}")
 
     try:
         # Load and process data
-        print("ðŸ“Š Step 1: Loading and cleaning data...")
-        print(f"ðŸ” Debug: Attempting to load: {input_file}")
+        print("Step 1: Loading and cleaning data...")
+        print(f"Debug: Attempting to load: {input_file}")
         
         if not os.path.exists(input_file):
-            print(f"âŒ ERROR: Input file does not exist: {input_file}")
+            print(f"ERROR: Input file does not exist: {input_file}")
             return
             
         file_size = os.path.getsize(input_file)
-        print(f"ðŸ” Debug: File size: {file_size:,} bytes")
+        print(f"Debug: File size: {file_size:,} bytes")
         
         df = load_and_clean_data(input_file)
-        print(f"âœ… Loaded {len(df)} rows")
-        print(f"ðŸ” Debug: Columns found: {list(df.columns)}")
+        print(f"Loaded {len(df)} rows")
+        print(f"Debug: Columns found: {list(df.columns)}")
         
         # Check for essential data
         if df.empty:
-            print("âŒ ERROR: No data loaded from file")
+            print("ERROR: No data loaded from file")
             return
             
-        print("ðŸ“Š Step 2: Calculating risk metrics...")
+        print("Step 2: Calculating risk metrics...")
         customer_risk = calculate_risk_metrics(df, config)
-        print(f"âœ… Risk calculated for {len(customer_risk)} customers")
+        print(f"Risk calculated for {len(customer_risk)} customers")
 
         if customer_risk.empty:
-            print("âŒ Error: Risk calculation failed. Please check your data.")
-            print("ðŸ” Debug: Checking data quality...")
+            print("Error: Risk calculation failed. Please check your data.")
+            print("Debug: Checking data quality...")
             print(f"   - Total rows: {len(df)}")
             print(f"   - Phone numbers: {df['PhoneNumber'].nunique() if 'PhoneNumber' in df.columns else 'N/A'}")
             print(f"   - Arrears > 0: {(df['Arrears'] > 0).sum() if 'Arrears' in df.columns else 'N/A'}")
             return
 
         # Build summaries
-        print("ðŸ“Š Step 3: Building summaries...")
+        print("Step 3: Building summaries...")
         officer_arrears = customer_risk.groupby("FieldOfficer")["Arrears"].sum().reset_index().sort_values("Arrears", ascending=False)
-        print(f"ðŸ” Debug: Found {len(officer_arrears)} officers")
+        print(f"Debug: Found {len(officer_arrears)} officers")
 
         summary_dict = {
             "Total Customers": customer_risk["PhoneNumber"].nunique(),
@@ -847,14 +845,14 @@ def main():
         officer_matrix = pd.concat([officer_matrix, pd.DataFrame([grand_total_row])], ignore_index=True)
 
         # Arrears by installment
-        arrears_by_inst = df.groupby("InstallmentNo")["Arrears"].max().reset_index().sort_values("InstallmentNo")
+        arrears_by_inst = df.groupby("InstallmentNo")["Arrears"].sum().reset_index().sort_values("InstallmentNo")
 
         # Build reports
         printable_risk = build_printable_risk_sheet(customer_risk)
         early_arrears = build_early_arrears_report(df, customer_risk)
 
         # Write to Excel
-        print("â³ Generating Excel Report...")
+        print("Generating Excel report...")
         os.makedirs(os.path.dirname(os.path.abspath(output_file)), exist_ok=True)
 
         try:
@@ -878,79 +876,79 @@ def main():
                 ]]
                 top10_df.to_excel(writer, sheet_name="Top 10 High Risk", index=False)
 
-            print(f"âœ… Excel file created: {output_file}")
+            print(f"Excel file created: {output_file}")
 
         except PermissionError:
-            print(f"âŒ CRITICAL ERROR: Could not save to '{output_file}'.")
+            print(f"CRITICAL ERROR: Could not save to '{output_file}'.")
             print("   >> Please CLOSE the Excel file if it's open and try again.")
             return
         except Exception as e:
-            print(f"âŒ Error writing Excel file: {e}")
+            print(f"Error writing Excel file: {e}")
             return
 
         # Generate charts and format
         if not args.safe_mode and not args.no_charts:
             try:
-                print("ðŸ“Š Step 4: Generating charts...")
+                print("Step 4: Generating charts...")
                 wb = load_workbook(output_file)
                 generate_charts(customer_risk, officer_arrears, arrears_by_inst, wb, config)
                 wb.save(output_file)
-                print("âœ… Charts generated and added to report")
+                print("Charts generated and added to report")
             except Exception as e:
-                print(f"âš ï¸  Warning: Chart generation failed: {e}")
+                print(f"Warning: Chart generation failed: {e}")
 
         # Format workbook
         if not args.safe_mode:
             try:
-                print("ðŸ“Š Step 5: Applying Excel formatting...")
+                print("Step 5: Applying Excel formatting...")
                 format_excel_workbook(output_file)
             except Exception as e:
-                print(f"âš ï¸  Warning: Excel formatting failed: {e}")
+                print(f"Warning: Excel formatting failed: {e}")
         else:
-            print("â­ï¸  Skipping formatting (safe mode)")
+            print("Skipping formatting (safe mode)")
 
         # Cleanup temporary images
         for f in ["chart_arrears.png", "chart_age.png", "chart_top10.png", "chart_pie.png", "chart_high_risk_by_officer.png"]:
             if os.path.exists(f):
                 try:
                     os.remove(f)
-                    print(f"ðŸ§¹ Cleaned up: {f}")
+                    print(f"Cleaned up: {f}")
                 except Exception as e:
-                    print(f"âš ï¸  Could not remove {f}: {e}")
+                    print(f"Could not remove {f}: {e}")
 
-        print(f"\nâœ… Success! Analysis saved to: {output_file}")
-        print("\nðŸ“Š REPORT SUMMARY:")
+        print(f"\nSuccess! Analysis saved to: {output_file}")
+        print("\nREPORT SUMMARY:")
         print(f"   Total Customers: {summary_dict['Total Customers']:,}")
         print(f"   Total Arrears: KES {summary_dict['Portfolio Arrears (Sum)']:,.2f}")
         print(f"   High Risk Customers: {summary_dict['High Risk Customers']:,}")
         print(f"   Arrears Rate: {summary_dict['Loans in Arrears %']:.1f}%")
 
         # Always open output location
-        print("\nðŸ“‚ Opening output location...")
+        print("\nOpening output location...")
         if open_output_location(output_file):
-            print(f"âœ… Output folder opened successfully")
+            print("Output folder opened successfully")
         else:
-            print("âš ï¸  Could not open the output folder automatically.")
+            print("Could not open the output folder automatically.")
             print(f"   Please navigate to: {os.path.dirname(os.path.abspath(output_file))}")
 
         # Also open if explicitly requested (redundant but maintains compatibility)
         if args.open_output:
             if open_output_location(output_file):
-                print(f"ðŸ“‚ Opened output location")
+                print("Opened output location")
             else:
-                print("âš ï¸  Could not open the output folder. See the path above.")
+                print("Could not open the output folder. See the path above.")
 
     except FileNotFoundError as e:
-        print(f"âŒ File Error: {e}")
+        print(f"File Error: {e}")
         sys.exit(1)
     except ValueError as e:
-        print(f"âŒ Data Error: {e}")
+        print(f"Data Error: {e}")
         sys.exit(1)
     except KeyError as e:
-        print(f"âŒ Column Error: {e}")
+        print(f"Column Error: {e}")
         sys.exit(1)
     except Exception as e:
-        print(f"âŒ Unexpected error: {e}")
+        print(f"Unexpected error: {e}")
         if args.verbose:
             import traceback
             traceback.print_exc()
@@ -990,11 +988,11 @@ def run(input_path: str, output_dir: str) -> dict:
     Preserves the original MTD_unpaid_dues.py processing logic and output structure.
     """
     temp_charts = [
-        "chart_arrears.png",
-        "chart_age.png",
-        "chart_top10.png",
-        "chart_pie.png",
-        "chart_high_risk_by_officer.png",
+        os.path.join(output_dir, "chart_arrears.png"),
+        os.path.join(output_dir, "chart_age.png"),
+        os.path.join(output_dir, "chart_top10.png"),
+        os.path.join(output_dir, "chart_pie.png"),
+        os.path.join(output_dir, "chart_high_risk_by_officer.png"),
     ]
 
     os.makedirs(output_dir, exist_ok=True)
@@ -1002,9 +1000,6 @@ def run(input_path: str, output_dir: str) -> dict:
         raise ValueError("No input file provided.")
     if not os.path.exists(input_path):
         raise FileNotFoundError(f"The file '{input_path}' was not found.")
-
-    original_print = builtins.print
-    builtins.print = lambda *args, **kwargs: None
 
     try:
         config = load_config()
@@ -1068,7 +1063,7 @@ def run(input_path: str, output_dir: str) -> dict:
 
         arrears_by_inst = (
             df.groupby("InstallmentNo")["Arrears"]
-            .max()
+            .sum()
             .reset_index()
             .sort_values("InstallmentNo")
         )
@@ -1106,7 +1101,7 @@ def run(input_path: str, output_dir: str) -> dict:
             top10_df.to_excel(writer, sheet_name="Top 10 High Risk", index=False)
 
         wb = load_workbook(output_file)
-        generate_charts(customer_risk, officer_arrears, arrears_by_inst, wb, config)
+        generate_charts(customer_risk, officer_arrears, arrears_by_inst, wb, config, output_dir)
         wb.save(output_file)
         format_excel_workbook(output_file)
 
@@ -1155,7 +1150,6 @@ def run(input_path: str, output_dir: str) -> dict:
             },
         }
     finally:
-        builtins.print = original_print
         for chart_file in temp_charts:
             try:
                 if os.path.exists(chart_file):

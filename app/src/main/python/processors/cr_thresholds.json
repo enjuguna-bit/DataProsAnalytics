@@ -1,0 +1,31 @@
+{
+  "thresholds": [
+    {
+      "min_change": 10,
+      "comment": "Excellent improvement",
+      "color": "D1FAE5"
+    },
+    {
+      "min_change": 5,
+      "comment": "Strong improvement",
+      "color": "DCFCE7"
+    },
+    {
+      "min_change": 1,
+      "comment": "Slight improvement",
+      "color": "FEF3C7"
+    },
+    {
+      "min_change": 0,
+      "comment": "No change",
+      "color": "E5E7EB"
+    },
+    {
+      "min_change": -9999,
+      "comment": "Needs attention",
+      "color": "FEE2E2"
+    }
+  ],
+  "default_color": "FEE2E2",
+  "default_comment": "Needs attention"
+}

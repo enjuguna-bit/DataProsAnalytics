@@ -4,12 +4,12 @@ import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
+import androidx.browser.customtabs.CustomTabColorSchemeParams
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import com.datapros.app.R
 import com.datapros.app.databinding.ActivitySubscriptionBinding
-import com.datapros.app.utils.UiMotion
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.launch
 import java.time.Instant
@@ -25,23 +25,28 @@ class SubscriptionActivity : AppCompatActivity() {
     data class PlanOption(
         val displayName: String,
         val planCode: String,
-        val amount: Int,
+        val amount: Int,          // KES
         val paymentUrl: String
     )
 
     companion object {
-        const val DAILY_PAYMENT_URL = "https://lipana.dev/pay/daily"
-        const val WEEKLY_PAYMENT_URL = "https://lipana.dev/pay/weekly-subscription"
-        const val SIX_HOUR_PAYMENT_URL = "https://lipana.dev/pay/smartuser"
-        const val ONE_HOUR_PAYMENT_URL = "https://lipana.dev/pay/1hrmaster"
+        const val SIX_HOUR_PAYMENT_URL    = "https://lipana.dev/pay/1hrmaster"
+        const val TWELVE_HOUR_PAYMENT_URL = "https://lipana.dev/pay/smartuser"
+        const val DAILY_PAYMENT_URL       = "https://lipana.dev/pay/daily"
+        const val WEEKLY_PAYMENT_URL      = "https://lipana.dev/pay/weekly-subscription"
+        const val MONTHLY_PAYMENT_URL     = "https://lipana.dev/pay/cruisemaster"
+
+        private const val POST_PAYMENT_CHECK_WINDOW_MS = 5 * 60 * 1000L  // 5 min
+        private const val CLAIM_RETRY_DELAY_MS = 3_000L
     }
 
-    private val plans by lazy {
+    private val plans: Map<Int, PlanOption> by lazy {
         mapOf(
-            R.id.chipPlanOneHour to PlanOption("1-Hour", "one_hour", 60, ONE_HOUR_PAYMENT_URL),
-            R.id.chipPlanSixHour to PlanOption("6-Hour", "six_hour", 100, SIX_HOUR_PAYMENT_URL),
-            R.id.chipPlanDaily to PlanOption("24-Hour", "daily", 200, DAILY_PAYMENT_URL),
-            R.id.chipPlanWeekly to PlanOption("Weekly", "weekly", 1000, WEEKLY_PAYMENT_URL)
+            R.id.chipPlanSixHour    to PlanOption("6-Hour",  "six_hour",    60,   SIX_HOUR_PAYMENT_URL),
+            R.id.chipPlanTwelveHour to PlanOption("12-Hour", "twelve_hour", 100,  TWELVE_HOUR_PAYMENT_URL),
+            R.id.chipPlanDaily      to PlanOption("24-Hour", "daily",       200,  DAILY_PAYMENT_URL),
+            R.id.chipPlanWeekly     to PlanOption("Weekly",  "weekly",      1000, WEEKLY_PAYMENT_URL),
+            R.id.chipPlanMonthly    to PlanOption("Monthly", "monthly",     3000, MONTHLY_PAYMENT_URL)
         )
     }
 
@@ -52,59 +57,47 @@ class SubscriptionActivity : AppCompatActivity() {
         selectedPlan = plans.getValue(R.id.chipPlanWeekly)
         setupUI()
         renderSelectedPlan()
-        UiMotion.bindPress(binding.btnStartPayment, binding.btnCheckStatus)
-        UiMotion.runEntryStagger(binding.root)
+        restoreLastPhone()
+        updateInlineStatus(SubscriptionHelper.getCachedStatus(this))
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (!checkIfReturningFromPayment()) {
+            refreshStatus(forceRefresh = false, allowClaim = false)
+        }
     }
 
     private fun setupUI() {
         binding.chipGroupPlans.setOnCheckedStateChangeListener { _, checkedIds ->
-            val selectedId = checkedIds.firstOrNull() ?: return@setOnCheckedStateChangeListener
-            selectedPlan = plans[selectedId] ?: selectedPlan
+            val id = checkedIds.firstOrNull() ?: return@setOnCheckedStateChangeListener
+            selectedPlan = plans[id] ?: selectedPlan
             renderSelectedPlan()
         }
 
         binding.btnStartPayment.setOnClickListener {
             val phone = binding.etPhoneNumber.text?.toString().orEmpty()
-            if (validatePhoneNumber(phone)) {
-                startSubscriptionFlow(selectedPlan, phone)
-            }
+            if (validatePhoneNumber(phone)) startSubscriptionFlow(selectedPlan, phone)
         }
 
         binding.btnCheckStatus.setOnClickListener {
             val phone = binding.etPhoneNumber.text?.toString().orEmpty()
-            if (!validatePhoneNumber(phone)) {
-                return@setOnClickListener
-            }
-            val formattedPhone = formatPhoneNumber(phone)
-            saveLastPhoneOnly(formattedPhone)
-            refreshStatus(forceRefresh = true)
+            if (!validatePhoneNumber(phone)) return@setOnClickListener
+            saveLastPhoneOnly(formatPhoneNumber(phone))
+            refreshStatus(forceRefresh = true, allowClaim = true)
         }
     }
 
     private fun renderSelectedPlan() {
-        binding.txtSelectedPlanSummary.text = getString(
-            R.string.subscription_plan_format,
-            selectedPlan.displayName
-        )
+        val label = "${selectedPlan.displayName}  ·  KES ${selectedPlan.amount}"
+        binding.txtSelectedPlanSummary.text = getString(R.string.subscription_plan_format, label)
     }
 
-    private fun refreshStatus(forceRefresh: Boolean) {
-        setBusy(true, getString(R.string.subscription_loading_status))
-        lifecycleScope.launch {
-            var status = SubscriptionHelper.refreshSubscriptionStatus(this@SubscriptionActivity, forceRefresh)
-            if (!status.premium && status.claimRequired) {
-                val intentId = SubscriptionHelper.getLastIntent(this@SubscriptionActivity)
-                if (!intentId.isNullOrBlank()) {
-                    val claim = SubscriptionHelper.claimSubscriptionWithIntent(this@SubscriptionActivity, intentId)
-                    if (claim.success) {
-                        status = SubscriptionHelper.refreshSubscriptionStatus(this@SubscriptionActivity, true)
-                    } else if (!claim.message.isNullOrBlank()) {
-                        setStatusUi(claim.message.orEmpty(), R.color.status_warning)
-                    }
-                }
-            }
-            setBusy(false, null)
-            updateInlineStatus(status)
+    private fun restoreLastPhone() {
+        val prefs = getSharedPreferences("subscriptions", MODE_PRIVATE)
+        val lastPhone = prefs.getString("last_phone", null) ?: return
+        if (binding.etPhoneNumber.text.isNullOrBlank()) {
+            binding.etPhoneNumber.setText(lastPhone)
         }
     }
 
@@ -115,25 +108,17 @@ class SubscriptionActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             val intentId = SubscriptionHelper.createPaymentIntent(
-                formattedPhone,
-                deviceId,
-                plan.planCode,
-                plan.amount
+                formattedPhone, deviceId, plan.planCode, plan.amount
             )
-
             if (intentId.isNullOrBlank()) {
                 setBusy(false, null)
                 showSnackbar(getString(R.string.subscription_payment_error))
                 return@launch
             }
-
             SubscriptionHelper.saveLastIntent(this@SubscriptionActivity, intentId)
             val opened = openPaymentPage(plan, formattedPhone, deviceId, intentId)
-            if (opened) {
-                saveSubscriptionAttempt(formattedPhone, plan.displayName, plan.amount)
-            } else {
-                SubscriptionHelper.clearLastIntent(this@SubscriptionActivity)
-            }
+            if (opened) saveSubscriptionAttempt(formattedPhone, plan.displayName, plan.amount)
+            else SubscriptionHelper.clearLastIntent(this@SubscriptionActivity)
             setBusy(false, null)
         }
     }
@@ -145,21 +130,25 @@ class SubscriptionActivity : AppCompatActivity() {
         intentId: String
     ): Boolean {
         return try {
-            val reference = "bulksms|intent=$intentId|plan=${plan.planCode}|device=$deviceId|phone=$formattedPhone"
+            val reference =
+                "bulksms|intent=$intentId|plan=${plan.planCode}|device=$deviceId|phone=$formattedPhone"
             val paymentUrl = Uri.parse(plan.paymentUrl).buildUpon()
-                .appendQueryParameter("phone", formattedPhone)
-                .appendQueryParameter("plan", plan.planCode)
+                .appendQueryParameter("phone",     formattedPhone)
+                .appendQueryParameter("plan",      plan.planCode)
+                .appendQueryParameter("amount",    plan.amount.toString())
                 .appendQueryParameter("reference", reference)
                 .appendQueryParameter("device_id", deviceId)
                 .appendQueryParameter("intent_id", intentId)
-                .build()
-                .toString()
+                .build().toString()
 
-            val builder = CustomTabsIntent.Builder()
-            builder.setShowTitle(true)
-            builder.setToolbarColor(ContextCompat.getColor(this, R.color.color_primary))
-            val customTabsIntent = builder.build()
-            customTabsIntent.launchUrl(this, Uri.parse(paymentUrl))
+            val colorParams = CustomTabColorSchemeParams.Builder()
+                .setToolbarColor(ContextCompat.getColor(this, R.color.color_primary))
+                .build()
+            val cct = CustomTabsIntent.Builder()
+                .setShowTitle(true)
+                .setDefaultColorSchemeParams(colorParams)
+                .build()
+            cct.launchUrl(this, Uri.parse(paymentUrl))
             showSnackbar(getString(R.string.subscription_payment_opened))
             true
         } catch (_: Exception) {
@@ -168,131 +157,88 @@ class SubscriptionActivity : AppCompatActivity() {
         }
     }
 
-    private fun setBusy(busy: Boolean, statusMessage: String?) {
-        binding.paymentProgress.visibility = if (busy) View.VISIBLE else View.GONE
-        binding.btnStartPayment.isEnabled = !busy
-        binding.btnCheckStatus.isEnabled = !busy
-        if (busy && !statusMessage.isNullOrBlank()) {
-            setStatusUi(statusMessage, R.color.status_info)
+    private fun refreshStatus(forceRefresh: Boolean, allowClaim: Boolean) {
+        setBusy(true, getString(R.string.subscription_loading_status))
+        lifecycleScope.launch {
+            val status = resolveStatus(forceRefresh, allowClaim)
+            setBusy(false, null)
+            updateInlineStatus(status)
         }
     }
 
-    private fun validatePhoneNumber(phone: String): Boolean {
-        if (phone.isBlank()) {
-            binding.phoneInputLayout.error = getString(R.string.subscription_phone_required)
-            binding.subscriptionScroll.smoothScrollTo(0, 0)
-            binding.etPhoneNumber.requestFocus()
-            showSnackbar(getString(R.string.subscription_phone_required))
-            return false
+    private suspend fun resolveStatus(
+        forceRefresh: Boolean,
+        allowClaim: Boolean
+    ): SubscriptionHelper.SubscriptionStatus {
+        var status = SubscriptionHelper.refreshSubscriptionStatus(this@SubscriptionActivity, forceRefresh)
+        if (!allowClaim || !shouldAttemptClaim(status)) {
+            return status
         }
 
-        val cleaned = phone.replace(Regex("[^0-9+]"), "")
-        val digits = cleaned.replace("+", "")
-
-        val valid = when {
-            digits.startsWith("0") -> digits.length == 10 && (digits[1] == '7' || digits[1] == '1')
-            digits.startsWith("254") -> digits.length == 12 && (digits[3] == '7' || digits[3] == '1')
-            digits.startsWith("7") || digits.startsWith("1") -> digits.length == 9
-            else -> false
+        val intentId = SubscriptionHelper.getLastIntent(this@SubscriptionActivity)
+        if (intentId.isNullOrBlank()) {
+            return status
         }
 
-        if (!valid) {
-            binding.phoneInputLayout.error = getString(R.string.subscription_phone_invalid)
-            binding.subscriptionScroll.smoothScrollTo(0, 0)
-            binding.etPhoneNumber.requestFocus()
-            showSnackbar(getString(R.string.subscription_phone_invalid))
-        } else {
-            binding.phoneInputLayout.error = null
+        val claim = SubscriptionHelper.claimSubscriptionWithIntent(this@SubscriptionActivity, intentId)
+        if (claim.success || claim.processing) {
+            status = SubscriptionHelper.refreshSubscriptionStatus(this@SubscriptionActivity, true)
+        } else if (!claim.message.isNullOrBlank()) {
+            showSnackbar(claim.message)
         }
-
-        return valid
+        return status
     }
 
-    private fun formatPhoneNumber(phone: String): String {
-        var formatted = phone.replace(Regex("[^0-9+]"), "").replace("+", "")
-        when {
-            formatted.startsWith("0") && formatted.length == 10 -> formatted = "254${formatted.substring(1)}"
-            formatted.startsWith("254") && formatted.length == 12 -> Unit
-            (formatted.startsWith("7") || formatted.startsWith("1")) && formatted.length == 9 -> {
-                formatted = "254$formatted"
-            }
-        }
-        return formatted
+    private fun shouldAttemptClaim(status: SubscriptionHelper.SubscriptionStatus): Boolean {
+        if (SubscriptionHelper.isActiveStatus(status)) return false
+        if (status.claimRequired) return true
+        return SubscriptionHelper.isPendingStatus(this, status)
     }
 
-    private fun saveSubscriptionAttempt(phone: String, plan: String, amount: Int) {
-        val prefs = getSharedPreferences("subscriptions", MODE_PRIVATE)
-        prefs.edit().apply {
-            putString("last_phone", phone)
-            putString("last_plan", plan)
-            putInt("last_amount", amount)
-            putLong("last_attempt", System.currentTimeMillis())
-            apply()
-        }
-    }
-
-    private fun saveLastPhoneOnly(phone: String) {
-        val prefs = getSharedPreferences("subscriptions", MODE_PRIVATE)
-        prefs.edit().putString("last_phone", phone).apply()
-    }
-
-    override fun onResume() {
-        super.onResume()
-        checkIfReturningFromPayment()
-    }
-
-    private fun checkIfReturningFromPayment() {
+    private fun checkIfReturningFromPayment(): Boolean {
         val prefs = getSharedPreferences("subscriptions", MODE_PRIVATE)
         val lastAttempt = prefs.getLong("last_attempt", 0)
-        if (System.currentTimeMillis() - lastAttempt >= 5 * 60 * 1000) {
-            return
-        }
+        if (System.currentTimeMillis() - lastAttempt >= POST_PAYMENT_CHECK_WINDOW_MS) return false
 
         lifecycleScope.launch {
-            val status = SubscriptionHelper.refreshSubscriptionStatus(this@SubscriptionActivity, true)
-            val now = System.currentTimeMillis()
-            val active = status.premium && (status.paidUntilMillis == null || status.paidUntilMillis > now)
+            var retries = 0
+            var activated = false
+            val maxRetries = 6 
 
-            if (active) {
-                updateInlineStatus(status)
-                showSnackbar(getString(R.string.subscription_active)) {
-                    finish()
+            while (retries < maxRetries && !activated) {
+                if (retries > 0) {
+                    setStatusUi(getString(R.string.subscription_loading_status), R.color.status_info)
+                    kotlinx.coroutines.delay(CLAIM_RETRY_DELAY_MS)
                 }
+
+                val status = resolveStatus(forceRefresh = true, allowClaim = true)
+                activated = SubscriptionHelper.isActiveStatus(status)
+                updateInlineStatus(status)
+
+                if (!activated && !SubscriptionHelper.isPendingStatus(this@SubscriptionActivity, status)) {
+                    break
+                }
+                retries++
+            }
+
+            if (activated) {
+                showSnackbar(getString(R.string.subscription_active)) { finish() }
                 prefs.edit().remove("last_attempt").apply()
                 SubscriptionHelper.clearLastIntent(this@SubscriptionActivity)
-                return@launch
+            } else {
+                updateInlineStatus(SubscriptionHelper.getCachedStatus(this@SubscriptionActivity))
             }
-
-            val intentId = SubscriptionHelper.getLastIntent(this@SubscriptionActivity)
-            if (!intentId.isNullOrBlank()) {
-                val claim = SubscriptionHelper.claimSubscriptionWithIntent(this@SubscriptionActivity, intentId)
-                if (claim.success) {
-                    val refreshed = SubscriptionHelper.refreshSubscriptionStatus(this@SubscriptionActivity, true)
-                    updateInlineStatus(refreshed)
-                    showSnackbar(getString(R.string.subscription_active)) {
-                        finish()
-                    }
-                    prefs.edit().remove("last_attempt").apply()
-                    SubscriptionHelper.clearLastIntent(this@SubscriptionActivity)
-                    return@launch
-                }
-                if (!claim.processing && !claim.message.isNullOrBlank()) {
-                    setStatusUi(claim.message.orEmpty(), R.color.status_warning)
-                }
-            }
-
-            setStatusUi(
-                status.message ?: getString(R.string.subscription_payment_pending),
-                R.color.status_warning
-            )
         }
+        return true
     }
 
     private fun updateInlineStatus(status: SubscriptionHelper.SubscriptionStatus) {
-        val now = System.currentTimeMillis()
-        val isActive = status.premium && (status.paidUntilMillis == null || status.paidUntilMillis > now)
-        val planLabel = status.plan?.trim()?.replace("_", " ")?.replaceFirstChar { it.uppercaseChar() }
+        val isActive = SubscriptionHelper.isActiveStatus(status)
+        val isPending = SubscriptionHelper.isPendingStatus(this, status)
+        val planLabel = SubscriptionHelper.formatPlanLabel(status.plan)
         val paidUntil = formatPaidUntil(status.paidUntilMillis)
+        val serverMessage = status.message?.takeIf { it.isNotBlank() }
+            ?: status.reason?.takeIf { it.isNotBlank() }
 
         val message = when {
             isActive && !planLabel.isNullOrBlank() && !paidUntil.isNullOrBlank() ->
@@ -303,45 +249,106 @@ class SubscriptionActivity : AppCompatActivity() {
                 getString(R.string.subscription_active_plan_only, planLabel)
             isActive ->
                 getString(R.string.subscription_active)
-            !status.message.isNullOrBlank() ->
-                status.message.orEmpty()
-            SubscriptionHelper.isPaymentPending(this) ->
+            isPending && !serverMessage.isNullOrBlank() ->
+                serverMessage
+            isPending ->
                 getString(R.string.subscription_payment_pending)
+            !planLabel.isNullOrBlank() && !paidUntil.isNullOrBlank() ->
+                getString(R.string.subscription_inactive_plan_and_time, planLabel, paidUntil)
+            !paidUntil.isNullOrBlank() ->
+                getString(R.string.subscription_inactive_time_only, paidUntil)
+            !planLabel.isNullOrBlank() ->
+                getString(R.string.subscription_inactive_plan_only, planLabel)
+            !serverMessage.isNullOrBlank() ->
+                serverMessage
             else ->
-                getString(R.string.subscription_status_default)
+                getString(R.string.subscription_inactive)
         }
-
         val color = when {
-            isActive -> R.color.status_success
-            status.claimRequired || status.reason == "device_unbound" || status.reason == "device_mismatch" ->
-                R.color.status_warning
-            SubscriptionHelper.isPaymentPending(this) -> R.color.status_warning
-            else -> R.color.status_muted
+            isActive                                   -> R.color.status_success
+            isPending                                  -> R.color.status_warning
+            else                                       -> R.color.status_muted
         }
         setStatusUi(message, color)
     }
 
     private fun setStatusUi(message: String, colorRes: Int) {
         binding.statusCard.visibility = View.VISIBLE
-        binding.txtInlineStatus.text = message
+        binding.txtInlineStatus.text  = message
         binding.txtInlineStatus.setTextColor(ContextCompat.getColor(this, colorRes))
         binding.statusCard.strokeColor = ContextCompat.getColor(this, colorRes)
-        UiMotion.reveal(binding.statusCard)
+    }
+
+    private fun setBusy(busy: Boolean, statusMessage: String?) {
+        binding.paymentProgress.visibility = if (busy) View.VISIBLE else View.GONE
+        binding.btnStartPayment.isEnabled  = !busy
+        binding.btnCheckStatus.isEnabled   = !busy
+        if (busy && !statusMessage.isNullOrBlank()) setStatusUi(statusMessage, R.color.status_info)
+    }
+
+    private fun validatePhoneNumber(phone: String): Boolean {
+        if (phone.isBlank()) {
+            showPhoneError(getString(R.string.subscription_phone_required))
+            return false
+        }
+        val digits = phone.replace(Regex("[^\\d]"), "")
+        val valid = when {
+            digits.startsWith("0")   && digits.length == 10
+                && (digits[1] == '7' || digits[1] == '1') -> true
+            digits.startsWith("254") && digits.length == 12
+                && (digits[3] == '7' || digits[3] == '1') -> true
+            (digits.startsWith("7") || digits.startsWith("1")) && digits.length == 9 -> true
+            else -> false
+        }
+        if (!valid) showPhoneError(getString(R.string.subscription_phone_invalid))
+        else binding.phoneInputLayout.error = null
+        return valid
+    }
+
+    private fun showPhoneError(msg: String) {
+        binding.phoneInputLayout.error = msg
+        binding.subscriptionScroll.smoothScrollTo(0, 0)
+        binding.etPhoneNumber.requestFocus()
+        showSnackbar(msg)
+    }
+
+    private fun formatPhoneNumber(phone: String): String {
+        var d = phone.replace(Regex("[^\\d]"), "")
+        return when {
+            d.startsWith("0")   && d.length == 10 -> "254${d.substring(1)}"
+            d.startsWith("254") && d.length == 12 -> d
+            (d.startsWith("7") || d.startsWith("1")) && d.length == 9 -> "254$d"
+            else -> d
+        }
+    }
+
+    private fun saveSubscriptionAttempt(phone: String, plan: String, amount: Int) {
+        getSharedPreferences("subscriptions", MODE_PRIVATE).edit().apply {
+            putString("last_phone",   phone)
+            putString("last_plan",    plan)
+            putInt("last_amount",     amount)
+            putLong("last_attempt",   System.currentTimeMillis())
+            apply()
+        }
+    }
+
+    private fun saveLastPhoneOnly(phone: String) {
+        getSharedPreferences("subscriptions", MODE_PRIVATE).edit()
+            .putString("last_phone", phone).apply()
     }
 
     private fun formatPaidUntil(paidUntilMillis: Long?): String? {
         if (paidUntilMillis == null || paidUntilMillis <= 0L) return null
-        val zone = ZoneId.systemDefault()
         val formatter = DateTimeFormatter.ofPattern("MMM d, yyyy 'at' h:mm a", Locale.getDefault())
-        val dateTime = Instant.ofEpochMilli(paidUntilMillis).atZone(zone).toLocalDateTime()
-        return formatter.format(dateTime)
+        return Instant.ofEpochMilli(paidUntilMillis)
+            .atZone(ZoneId.systemDefault())
+            .toLocalDateTime()
+            .format(formatter)
     }
 
     private fun showSnackbar(message: String, action: (() -> Unit)? = null) {
-        val snackbar = Snackbar.make(binding.root, message, Snackbar.LENGTH_LONG)
-        if (action != null) {
-            snackbar.setAction(R.string.subscription_close) { action.invoke() }
-        }
-        snackbar.show()
+        val sb = Snackbar.make(binding.root, message, Snackbar.LENGTH_LONG)
+        if (action != null) sb.setAction(R.string.subscription_close) { action() }
+        sb.show()
     }
 }

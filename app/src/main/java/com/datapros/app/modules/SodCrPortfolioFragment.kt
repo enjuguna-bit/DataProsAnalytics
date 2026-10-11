@@ -1,160 +1,122 @@
 package com.datapros.app.modules
 
+import android.app.Activity
+import android.content.Intent
+import android.graphics.BitmapFactory
 import android.net.Uri
+import android.os.Bundle
+import android.view.View
+import android.widget.ImageView
+import android.widget.TextView
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.view.isVisible
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
+import com.datapros.app.R
+import com.datapros.app.billing.UsageGate
+import com.datapros.app.utils.FileUtils
 import com.datapros.app.utils.PythonRunner
-import com.google.android.gms.tasks.Tasks
-import com.google.mlkit.vision.common.InputImage
-import com.google.mlkit.vision.text.TextRecognition
-import com.google.mlkit.vision.text.latin.TextRecognizerOptions
+import com.datapros.app.utils.UiMotion
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.card.MaterialCardView
+import com.google.android.material.progressindicator.LinearProgressIndicator
+import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
-import java.io.File
-import java.util.Locale
-import kotlin.math.roundToInt
 
-class SodCrPortfolioFragment : BaseModuleFragment() {
+class SodCrPortfolioFragment : Fragment(R.layout.fragment_sod_cr_portfolio) {
 
-    override val moduleTitle = "SOD CR Per Portfolio"
-    override val moduleSubtitle = "Upload raw CSV/Excel or image, then export processed Excel report"
+    private var officerPath: String? = null
+    private var detailPath: String? = null
+    private var outputFile: String? = null
+    private lateinit var officerLauncher: ActivityResultLauncher<Intent>
+    private lateinit var detailLauncher: ActivityResultLauncher<Intent>
 
-    private data class ParsedRow(
-        val name: String,
-        val total: Int,
-        val paid: Int,
-        val outstanding: Int,
-        val cr: Int,
-        val targetTo80: Int
-    )
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        PythonRunner.ensureStarted(requireContext())
+        officerLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) result.data?.data?.let { handlePicked(it, true) }
+        }
+        detailLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) result.data?.data?.let { handlePicked(it, false) }
+        }
+    }
 
-    override fun filePickerMimeTypes(): Array<String> = arrayOf(
-        "text/csv",
-        "application/vnd.ms-excel",
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        "image/jpeg",
-        "image/png",
-        "image/jpg"
-    )
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        view.findViewById<MaterialButton>(R.id.btn_select_officer).setOnClickListener { officerLauncher.launch(filePicker()) }
+        view.findViewById<MaterialButton>(R.id.btn_select_detail).setOnClickListener { detailLauncher.launch(filePicker()) }
+        view.findViewById<MaterialButton>(R.id.btn_process).setOnClickListener { process() }
+        view.findViewById<MaterialButton>(R.id.btn_export).setOnClickListener { openReport() }
+        view.findViewById<MaterialButton>(R.id.btn_share).setOnClickListener { shareReport() }
+        UiMotion.bindPress(view.findViewById(R.id.btn_select_officer), view.findViewById(R.id.btn_select_detail), view.findViewById(R.id.btn_process), view.findViewById(R.id.btn_export), view.findViewById(R.id.btn_share))
+        UiMotion.runEntryStagger(view)
+    }
 
-    override suspend fun runProcessor(inputPath: String, outputDir: String): JSONObject {
-        val sourcePath = if (isImagePath(inputPath)) {
-            buildStructuredCsvFromImage(inputPath)
+    private fun filePicker(): Intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply { addCategory(Intent.CATEGORY_OPENABLE); type = "*/*" }
+
+    private fun handlePicked(uri: Uri, officer: Boolean) {
+        val path = FileUtils.uriToPath(requireContext(), uri, "input") ?: return
+        if (officer) {
+            officerPath = path
+            view?.findViewById<TextView>(R.id.tv_officer_file)?.text = path.substringAfterLast('/')
         } else {
-            inputPath
+            detailPath = path
+            view?.findViewById<TextView>(R.id.tv_detail_file)?.text = path.substringAfterLast('/')
         }
-        return PythonRunner.runSodCrPortfolio(sourcePath, outputDir)
+        view?.findViewById<MaterialButton>(R.id.btn_process)?.isEnabled = officerPath != null && detailPath != null
     }
 
-    override fun bindStats(stats: JSONObject) {
-        val portfolios = stats.optInt("total_portfolios", 0)
-        val outstanding = stats.optDouble("total_outstanding", 0.0)
-        val avgRate = stats.optDouble("avg_collection_rate", 0.0)
-        val gapCount = stats.optInt("below_80_count", 0)
-
-        setStats(
-            v1 = "%,d".format(portfolios), l1 = "Portfolios",
-            v2 = "KES %,.0f".format(outstanding), l2 = "Outstanding",
-            v3 = "%.1f%%".format(avgRate), l3 = "Avg CR",
-            v4 = "%,d".format(gapCount), l4 = "Below 80%"
-        )
-    }
-
-    private fun isImagePath(path: String): Boolean {
-        val p = path.lowercase(Locale.ROOT)
-        return p.endsWith(".jpg") || p.endsWith(".jpeg") || p.endsWith(".png")
-    }
-
-    private suspend fun buildStructuredCsvFromImage(imagePath: String): String {
-        val context = requireContext()
-        return withContext(Dispatchers.IO) {
-            val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+    private fun process() {
+        val officer = officerPath ?: return
+        val detail = detailPath ?: return
+        if (!UsageGate.ensureAllowed(this)) return
+        setLoading(true)
+        lifecycleScope.launch {
             try {
-                val image = InputImage.fromFilePath(context, Uri.fromFile(File(imagePath)))
-                val visionText = Tasks.await(recognizer.process(image))
-                val rows = parseRows(visionText.text)
-                if (rows.isEmpty()) {
-                    throw IllegalArgumentException(
-                        "Could not read tabular rows from image. Upload CSV/Excel or a clearer image."
-                    )
-                }
-
-                val inputDir = File(context.getExternalFilesDir(null), "input")
-                inputDir.mkdirs()
-                val csvPath = File(inputDir, "sod_cr_ocr_${System.currentTimeMillis()}.csv")
-
-                csvPath.bufferedWriter(Charsets.UTF_8).use { writer ->
-                    writer.appendLine(
-                        "\"Full Name\",\"Total Amount\",\"Paid Amount\",\"Outstanding Amount\",\"Collection Rate (%)\",\"Target To 80%\",\"Branch Name\""
-                    )
-                    rows.forEach { row ->
-                        writer.appendLine(
-                            "\"${escapeCsv(row.name)}\",\"${row.total}\",\"${row.paid}\",\"${row.outstanding}\",\"${row.cr}\",\"${row.targetTo80}\",\"MOLO\""
-                        )
-                    }
-                }
-
-                csvPath.absolutePath
+                val result = withContext(Dispatchers.IO) { PythonRunner.runSodCrPortfolio(officer, detail, FileUtils.outputDir(requireContext())) }
+                if (isAdded && view != null) handleResult(result)
+            } catch (e: Exception) {
+                if (isAdded && view != null) showError(e.message ?: "Processing failed")
             } finally {
-                recognizer.close()
+                if (isAdded && view != null) setLoading(false)
             }
         }
     }
 
-    private fun parseRows(rawText: String): List<ParsedRow> {
-        val lines = rawText
-            .split("\n")
-            .map { it.trim() }
-            .filter { it.isNotBlank() }
-
-        val rowPattern = Regex(
-            "^([A-Z][A-Z\\s\\.'-]{2,}?)\\s+([0-9,]+)\\s+([0-9,]+)\\s+([0-9,]+)\\s+([0-9]{1,3})(?:\\s+([0-9,]+))?$"
-        )
-
-        val rows = mutableListOf<ParsedRow>()
-        lines.forEach { line ->
-            val cleaned = line
-                .uppercase(Locale.ROOT)
-                .replace(":", " ")
-                .replace(Regex("\\s+"), " ")
-                .trim()
-
-            if (cleaned.contains("FULL NAME") && cleaned.contains("TOTAL")) return@forEach
-            if (cleaned.contains("TARGETTO80") || cleaned.contains("TARGET TO 80")) return@forEach
-
-            val match = rowPattern.find(cleaned) ?: return@forEach
-            val name = match.groupValues[1].trim().replace(Regex("\\s+"), " ")
-            val total = parseInt(match.groupValues[2])
-            val paid = parseInt(match.groupValues[3])
-            val outstanding = parseInt(match.groupValues[4])
-            val cr = parseInt(match.groupValues[5]).coerceIn(0, 100)
-            val targetFromText = match.groupValues.getOrNull(6).orEmpty()
-            val targetTo80 = if (targetFromText.isNotBlank()) {
-                parseInt(targetFromText)
-            } else {
-                ((total * 0.8) - paid).coerceAtLeast(0.0).roundToInt()
-            }
-
-            if (total <= 0) return@forEach
-
-            rows.add(
-                ParsedRow(
-                    name = name,
-                    total = total,
-                    paid = paid,
-                    outstanding = outstanding,
-                    cr = cr,
-                    targetTo80 = targetTo80
-                )
-            )
+    private fun handleResult(result: JSONObject) {
+        val root = view ?: return
+        if (!result.optBoolean("success", false)) { showError(result.optString("error", "Unknown error")); return }
+        UsageGate.recordSuccess(this)
+        outputFile = result.optString("output_file").takeIf { it.isNotBlank() }
+        result.optString("chart_file").takeIf { it.isNotBlank() }?.let { BitmapFactory.decodeFile(it)?.let { bmp -> root.findViewById<ImageView>(R.id.iv_chart).setImageBitmap(bmp); root.findViewById<MaterialCardView>(R.id.card_chart).isVisible = true } }
+        result.optJSONObject("stats")?.let { stats ->
+            root.findViewById<TextView>(R.id.tv_stat1_value).text = "KES %,.0f".format(stats.optDouble("total_clean_amount", 0.0))
+            root.findViewById<TextView>(R.id.tv_stat2_value).text = "KES %,.0f".format(stats.optDouble("total_clean_still_collectible", 0.0))
+            root.findViewById<TextView>(R.id.tv_stat3_value).text = "%.1f%%".format(stats.optDouble("current_branch_cr", 0.0))
+            root.findViewById<TextView>(R.id.tv_stat4_value).text = "%.1f%%".format(stats.optDouble("potential_branch_eod_cr", 0.0))
+            root.findViewById<MaterialCardView>(R.id.card_stats).isVisible = true
         }
-
-        return rows
+        root.findViewById<View>(R.id.layout_export_buttons).isVisible = true
+        showStatus("SOD CR clean-account opportunity report ready.")
     }
 
-    private fun parseInt(raw: String): Int {
-        val digits = raw.replace(Regex("[^0-9]"), "")
-        return digits.toIntOrNull() ?: 0
+    private fun setLoading(loading: Boolean) {
+        view?.apply {
+            findViewById<LinearProgressIndicator>(R.id.progress_bar).isVisible = loading
+            findViewById<TextView>(R.id.tv_status).isVisible = loading
+            findViewById<MaterialButton>(R.id.btn_process).isEnabled = !loading && officerPath != null && detailPath != null
+            findViewById<MaterialButton>(R.id.btn_select_officer).isEnabled = !loading
+            findViewById<MaterialButton>(R.id.btn_select_detail).isEnabled = !loading
+        }
     }
 
-    private fun escapeCsv(value: String): String = value.replace("\"", "\"\"")
+    private fun showStatus(message: String) { view?.findViewById<TextView>(R.id.tv_status)?.apply { text = message; isVisible = true } }
+    private fun showError(message: String) { showStatus("Error: $message"); view?.let { Snackbar.make(it, message, Snackbar.LENGTH_LONG).show() } }
+    private fun openReport() { outputFile?.let { startActivity(FileUtils.openFile(requireContext(), it)) } }
+    private fun shareReport() { outputFile?.let { startActivity(Intent.createChooser(FileUtils.shareFile(requireContext(), it), "Share Report via...")) } }
 }

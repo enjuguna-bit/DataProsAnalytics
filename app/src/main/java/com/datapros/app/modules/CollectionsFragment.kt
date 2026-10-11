@@ -1,4 +1,4 @@
-﻿package com.datapros.app.modules
+package com.datapros.app.modules
 
 import android.app.Activity
 import android.content.Intent
@@ -50,7 +50,7 @@ class CollectionsFragment : Fragment(R.layout.fragment_collections) {
                 result.data?.data?.let { uri ->
                     FileUtils.uriToPath(requireContext(), uri, "input")?.let { path ->
                         sodPath = path
-                        requireView().findViewById<TextView>(R.id.tv_sod_file).text =
+                        view?.findViewById<TextView>(R.id.tv_sod_file)?.text =
                             path.substringAfterLast('/')
                         updateProcessButton()
                     }
@@ -65,7 +65,7 @@ class CollectionsFragment : Fragment(R.layout.fragment_collections) {
                 result.data?.data?.let { uri ->
                     FileUtils.uriToPath(requireContext(), uri, "input")?.let { path ->
                         currentPath = path
-                        requireView().findViewById<TextView>(R.id.tv_current_file).text =
+                        view?.findViewById<TextView>(R.id.tv_current_file)?.text =
                             path.substringAfterLast('/')
                         updateProcessButton()
                     }
@@ -100,15 +100,10 @@ class CollectionsFragment : Fragment(R.layout.fragment_collections) {
     private fun filePicker(): Intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
         addCategory(Intent.CATEGORY_OPENABLE)
         type = "*/*"
-        putExtra(Intent.EXTRA_MIME_TYPES, arrayOf(
-            "text/csv",
-            "application/vnd.ms-excel",
-            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        ))
     }
 
     private fun updateProcessButton() {
-        requireView().findViewById<MaterialButton>(R.id.btn_process).isEnabled =
+        view?.findViewById<MaterialButton>(R.id.btn_process)?.isEnabled =
             sodPath != null && currentPath != null
     }
 
@@ -118,12 +113,24 @@ class CollectionsFragment : Fragment(R.layout.fragment_collections) {
         if (!UsageGate.ensureAllowed(this)) return
         setLoading(true)
         lifecycleScope.launch {
-            val officers = withContext(Dispatchers.IO) {
-                PythonRunner.getCollectionOfficers(sod)
-            }
-            setLoading(false)
-            showTargetsDialog(officers) { targetsInput ->
-                runCollectionsWithTargets(sod, cur, targetsInput)
+            try {
+                val officers = withContext(Dispatchers.IO) {
+                    PythonRunner.getCollectionOfficers(sod)
+                }
+                if (!isAdded || view == null) return@launch
+                showTargetsDialog(officers) { targetsInput ->
+                    runCollectionsWithTargets(sod, cur, targetsInput)
+                }
+            } catch (e: Exception) {
+                if (isAdded && view != null) {
+                    val err = e.message ?: "Failed to load officers"
+                    showStatus("Error: $err")
+                    Snackbar.make(requireView(), "Error: $err", Snackbar.LENGTH_LONG).show()
+                }
+            } finally {
+                if (isAdded && view != null) {
+                    setLoading(false)
+                }
             }
         }
     }
@@ -131,16 +138,29 @@ class CollectionsFragment : Fragment(R.layout.fragment_collections) {
     private fun runCollectionsWithTargets(sod: String, cur: String, targetsInput: String) {
         setLoading(true)
         lifecycleScope.launch {
-            val result = withContext(Dispatchers.IO) {
-                PythonRunner.runCollections(
-                    sodPath = sod,
-                    currentPath = cur,
-                    outputDir = FileUtils.outputDir(requireContext()),
-                    targetsInput = targetsInput
-                )
+            try {
+                val outputDir = FileUtils.outputDir(requireContext())
+                val result = withContext(Dispatchers.IO) {
+                    PythonRunner.runCollections(
+                        sodPath = sod,
+                        currentPath = cur,
+                        outputDir = outputDir,
+                        targetsInput = targetsInput
+                    )
+                }
+                if (!isAdded || view == null) return@launch
+                handleResult(result)
+            } catch (e: Exception) {
+                if (isAdded && view != null) {
+                    val err = e.message ?: "Collections processing failed"
+                    showStatus("Error: $err")
+                    Snackbar.make(requireView(), "Error: $err", Snackbar.LENGTH_LONG).show()
+                }
+            } finally {
+                if (isAdded && view != null) {
+                    setLoading(false)
+                }
             }
-            setLoading(false)
-            handleResult(result)
         }
     }
 
@@ -177,6 +197,7 @@ class CollectionsFragment : Fragment(R.layout.fragment_collections) {
     }
 
     private fun handleResult(result: JSONObject) {
+        val root = view ?: return
         if (result.optBoolean("success", false)) {
             UsageGate.recordSuccess(this)
             outputFile = result.optString("output_file")
@@ -185,8 +206,8 @@ class CollectionsFragment : Fragment(R.layout.fragment_collections) {
             if (chartFile.isNotEmpty()) {
                 val bmp = BitmapFactory.decodeFile(chartFile)
                 if (bmp != null) {
-                    requireView().findViewById<ImageView>(R.id.iv_chart).setImageBitmap(bmp)
-                    requireView().findViewById<MaterialCardView>(R.id.card_chart).apply {
+                    root.findViewById<ImageView>(R.id.iv_chart).setImageBitmap(bmp)
+                    root.findViewById<MaterialCardView>(R.id.card_chart).apply {
                         isVisible = true
                         UiMotion.reveal(this)
                     }
@@ -195,19 +216,19 @@ class CollectionsFragment : Fragment(R.layout.fragment_collections) {
 
             val stats = result.optJSONObject("stats")
             if (stats != null) {
-                requireView().findViewById<TextView>(R.id.tv_stat1_value).text =
+                root.findViewById<TextView>(R.id.tv_stat1_value).text =
                     "KES %,.0f".format(stats.optDouble("bucket_1_15", 0.0))
-                requireView().findViewById<TextView>(R.id.tv_stat2_value).text =
+                root.findViewById<TextView>(R.id.tv_stat2_value).text =
                     "KES %,.0f".format(stats.optDouble("bucket_16_30", 0.0))
-                requireView().findViewById<TextView>(R.id.tv_stat3_value).text =
+                root.findViewById<TextView>(R.id.tv_stat3_value).text =
                     "KES %,.0f".format(stats.optDouble("bucket_31_180", 0.0))
-                requireView().findViewById<MaterialCardView>(R.id.card_stats).apply {
+                root.findViewById<MaterialCardView>(R.id.card_stats).apply {
                     isVisible = true
                     UiMotion.reveal(this)
                 }
             }
 
-            requireView().findViewById<View>(R.id.layout_export_buttons).apply {
+            root.findViewById<View>(R.id.layout_export_buttons).apply {
                 isVisible = true
                 UiMotion.reveal(this)
             }
@@ -215,12 +236,12 @@ class CollectionsFragment : Fragment(R.layout.fragment_collections) {
         } else {
             val err = result.optString("error", "Unknown error")
             showStatus("Error: $err")
-            Snackbar.make(requireView(), "Error: $err", Snackbar.LENGTH_LONG).show()
+            Snackbar.make(root, "Error: $err", Snackbar.LENGTH_LONG).show()
         }
     }
 
     private fun setLoading(loading: Boolean) {
-        requireView().apply {
+        view?.apply {
             findViewById<LinearProgressIndicator>(R.id.progress_bar).isVisible = loading
             findViewById<TextView>(R.id.tv_status).isVisible = loading
             findViewById<MaterialButton>(R.id.btn_process).isEnabled = !loading
@@ -229,7 +250,7 @@ class CollectionsFragment : Fragment(R.layout.fragment_collections) {
     }
 
     private fun showStatus(msg: String) {
-        requireView().apply {
+        view?.apply {
             val tv = findViewById<TextView>(R.id.tv_status)
             tv.text = msg
             tv.isVisible = true
@@ -241,7 +262,9 @@ class CollectionsFragment : Fragment(R.layout.fragment_collections) {
         try {
             startActivity(FileUtils.openFile(requireContext(), path))
         } catch (e: Exception) {
-            Snackbar.make(requireView(), "No app found to open .xlsx files", Snackbar.LENGTH_LONG).show()
+            view?.let {
+                Snackbar.make(it, "No app found to open .xlsx files", Snackbar.LENGTH_LONG).show()
+            }
         }
     }
 

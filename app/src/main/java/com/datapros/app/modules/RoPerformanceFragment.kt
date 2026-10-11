@@ -1,4 +1,4 @@
-﻿package com.datapros.app.modules
+package com.datapros.app.modules
 
 import android.app.Activity
 import android.content.Intent
@@ -28,13 +28,13 @@ import org.json.JSONObject
 
 class RoPerformanceFragment : Fragment(R.layout.fragment_ro) {
 
-    private var incomePath: String? = null
-    private var collectionRatePath: String? = null
-    private var disbursementPath: String? = null
-    private var outputFile: String? = null
+    private var incomePath:          String? = null
+    private var collectionRatePath:  String? = null
+    private var disbursementPath:    String? = null
+    private var outputFile:          String? = null
 
-    private lateinit var incomeLauncher: ActivityResultLauncher<Intent>
-    private lateinit var collectionLauncher: ActivityResultLauncher<Intent>
+    private lateinit var incomeLauncher:       ActivityResultLauncher<Intent>
+    private lateinit var collectionLauncher:   ActivityResultLauncher<Intent>
     private lateinit var disbursementLauncher: ActivityResultLauncher<Intent>
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -43,17 +43,17 @@ class RoPerformanceFragment : Fragment(R.layout.fragment_ro) {
 
         incomeLauncher = registerPicker { path ->
             incomePath = path
-            requireView().findViewById<TextView>(R.id.tv_income_file).text = path.substringAfterLast('/')
+            view?.findViewById<TextView>(R.id.tv_income_file)?.text = path.substringAfterLast('/')
             updateProcessButton()
         }
         collectionLauncher = registerPicker { path ->
             collectionRatePath = path
-            requireView().findViewById<TextView>(R.id.tv_cr_file).text = path.substringAfterLast('/')
+            view?.findViewById<TextView>(R.id.tv_cr_file)?.text = path.substringAfterLast('/')
             updateProcessButton()
         }
         disbursementLauncher = registerPicker { path ->
             disbursementPath = path
-            requireView().findViewById<TextView>(R.id.tv_disb_file).text = path.substringAfterLast('/')
+            view?.findViewById<TextView>(R.id.tv_disb_file)?.text = path.substringAfterLast('/')
             updateProcessButton()
         }
     }
@@ -70,18 +70,13 @@ class RoPerformanceFragment : Fragment(R.layout.fragment_ro) {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        view.findViewById<MaterialButton>(R.id.btn_income).setOnClickListener {
-            incomeLauncher.launch(filePicker())
-        }
-        view.findViewById<MaterialButton>(R.id.btn_cr).setOnClickListener {
-            collectionLauncher.launch(filePicker())
-        }
-        view.findViewById<MaterialButton>(R.id.btn_disb).setOnClickListener {
-            disbursementLauncher.launch(filePicker())
-        }
+
+        view.findViewById<MaterialButton>(R.id.btn_income).setOnClickListener { incomeLauncher.launch(filePicker()) }
+        view.findViewById<MaterialButton>(R.id.btn_cr).setOnClickListener     { collectionLauncher.launch(filePicker()) }
+        view.findViewById<MaterialButton>(R.id.btn_disb).setOnClickListener   { disbursementLauncher.launch(filePicker()) }
         view.findViewById<MaterialButton>(R.id.btn_process).setOnClickListener { process() }
-        view.findViewById<MaterialButton>(R.id.btn_export).setOnClickListener { openReport() }
-        view.findViewById<MaterialButton>(R.id.btn_share).setOnClickListener { shareReport() }
+        view.findViewById<MaterialButton>(R.id.btn_export).setOnClickListener  { openReport() }
+        view.findViewById<MaterialButton>(R.id.btn_share).setOnClickListener   { shareReport() }
 
         UiMotion.bindPress(
             view.findViewById(R.id.btn_income),
@@ -97,39 +92,40 @@ class RoPerformanceFragment : Fragment(R.layout.fragment_ro) {
     private fun filePicker(): Intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
         addCategory(Intent.CATEGORY_OPENABLE)
         type = "*/*"
-        putExtra(
-            Intent.EXTRA_MIME_TYPES,
-            arrayOf(
-                "text/csv",
-                "application/vnd.ms-excel",
-                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            )
-        )
     }
 
     private fun updateProcessButton() {
-        requireView().findViewById<MaterialButton>(R.id.btn_process).isEnabled =
+        view?.findViewById<MaterialButton>(R.id.btn_process)?.isEnabled =
             incomePath != null && collectionRatePath != null && disbursementPath != null
     }
 
     private fun process() {
-        val income = incomePath ?: return
-        val collection = collectionRatePath ?: return
-        val disbursement = disbursementPath ?: return
+        val income      = incomePath         ?: return
+        val collection  = collectionRatePath ?: return
+        val disbursement = disbursementPath  ?: return
         if (!UsageGate.ensureAllowed(this)) return
 
         setLoading(true)
         lifecycleScope.launch {
-            val result = withContext(Dispatchers.IO) {
-                PythonRunner.runRo(
-                    incomePath = income,
-                    collectionRatePath = collection,
-                    disbursementPath = disbursement,
-                    outputDir = FileUtils.outputDir(requireContext())
-                )
+            try {
+                val result = withContext(Dispatchers.IO) {
+                    PythonRunner.runRo(
+                        incomePath         = income,
+                        collectionRatePath = collection,
+                        disbursementPath   = disbursement,
+                        outputDir          = FileUtils.outputDir(requireContext())
+                    )
+                }
+                if (isAdded && view != null) handleResult(result)
+            } catch (e: Exception) {
+                if (isAdded && view != null) {
+                    val msg = e.message ?: "RO processing failed"
+                    showStatus("Error: $msg")
+                    Snackbar.make(requireView(), "Error: $msg", Snackbar.LENGTH_LONG).show()
+                }
+            } finally {
+                if (isAdded && view != null) setLoading(false)
             }
-            setLoading(false)
-            handleResult(result)
         }
     }
 
@@ -137,20 +133,17 @@ class RoPerformanceFragment : Fragment(R.layout.fragment_ro) {
         if (result.optBoolean("success", false)) {
             UsageGate.recordSuccess(this)
             outputFile = result.optString("output_file")
-            val chartFile = result.optString("chart_file")
 
-            if (chartFile.isNotEmpty()) {
+            result.optString("chart_file").takeIf { it.isNotEmpty() }?.let { chartFile ->
                 BitmapFactory.decodeFile(chartFile)?.let { bmp ->
                     requireView().findViewById<ImageView>(R.id.iv_chart).setImageBitmap(bmp)
                     requireView().findViewById<MaterialCardView>(R.id.card_chart).apply {
-                        isVisible = true
-                        UiMotion.reveal(this)
+                        isVisible = true; UiMotion.reveal(this)
                     }
                 }
             }
 
-            val stats = result.optJSONObject("stats")
-            if (stats != null) {
+            result.optJSONObject("stats")?.let { stats ->
                 requireView().apply {
                     findViewById<TextView>(R.id.tv_stat1_value).text =
                         stats.optInt("ro_count", stats.optInt("total_ros", 0)).toString()
@@ -159,15 +152,13 @@ class RoPerformanceFragment : Fragment(R.layout.fragment_ro) {
                     findViewById<TextView>(R.id.tv_stat3_value).text =
                         "%.1f".format(stats.optDouble("avg_position_score", 0.0))
                     findViewById<MaterialCardView>(R.id.card_stats).apply {
-                        isVisible = true
-                        UiMotion.reveal(this)
+                        isVisible = true; UiMotion.reveal(this)
                     }
                 }
             }
 
             requireView().findViewById<View>(R.id.layout_export_buttons).apply {
-                isVisible = true
-                UiMotion.reveal(this)
+                isVisible = true; UiMotion.reveal(this)
             }
             showStatus("RO report ready.")
         } else {
@@ -178,7 +169,7 @@ class RoPerformanceFragment : Fragment(R.layout.fragment_ro) {
     }
 
     private fun setLoading(loading: Boolean) {
-        requireView().apply {
+        view?.apply {
             findViewById<LinearProgressIndicator>(R.id.progress_bar).isVisible = loading
             val tv = findViewById<TextView>(R.id.tv_status)
             tv.isVisible = loading
@@ -188,25 +179,20 @@ class RoPerformanceFragment : Fragment(R.layout.fragment_ro) {
     }
 
     private fun showStatus(msg: String) {
-        requireView().apply {
+        view?.apply {
             val tv = findViewById<TextView>(R.id.tv_status)
-            tv.text = msg
-            tv.isVisible = true
+            tv.text = msg; tv.isVisible = true
         }
     }
 
     private fun openReport() {
         val path = outputFile ?: return
-        try {
-            startActivity(FileUtils.openFile(requireContext(), path))
-        } catch (e: Exception) {
-            Snackbar.make(requireView(), "No app found to open .xlsx files", Snackbar.LENGTH_LONG).show()
-        }
+        runCatching { startActivity(FileUtils.openFile(requireContext(), path)) }
+            .onFailure { Snackbar.make(requireView(), "No app found to open .xlsx files", Snackbar.LENGTH_LONG).show() }
     }
 
     private fun shareReport() {
         val path = outputFile ?: return
-        startActivity(Intent.createChooser(FileUtils.shareFile(requireContext(), path), "Share Report via..."))
+        startActivity(Intent.createChooser(FileUtils.shareFile(requireContext(), path), "Share Report via…"))
     }
 }
-

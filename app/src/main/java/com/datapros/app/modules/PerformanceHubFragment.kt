@@ -25,6 +25,12 @@ class PerformanceHubFragment : MenuHubFragment() {
             subtitleRes = R.string.hub_action_mtd_pivot,
             iconRes = R.drawable.ic_nav_collections,
             destinationId = R.id.nav_mtd_pivot
+        ),
+        HubAction(
+            titleRes = R.string.nav_new_loans_arrears,
+            subtitleRes = R.string.hub_action_new_loans_arrears,
+            iconRes = R.drawable.ic_nav_arrears,
+            destinationId = R.id.nav_new_loans_arrears
         )
     )
 }

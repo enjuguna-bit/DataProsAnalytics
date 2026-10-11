@@ -1,4 +1,4 @@
-﻿package com.datapros.app.modules
+package com.datapros.app.modules
 
 import android.app.Activity
 import android.content.Intent
@@ -108,7 +108,6 @@ abstract class BaseModuleFragment : Fragment(R.layout.fragment_single_file) {
         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
             type = "*/*"
-            putExtra(Intent.EXTRA_MIME_TYPES, filePickerMimeTypes())
         }
         fileLauncher.launch(intent)
     }
@@ -179,10 +178,35 @@ abstract class BaseModuleFragment : Fragment(R.layout.fragment_single_file) {
 
     // Helpers for stat TextViews
 
+    /**
+     * A single stat tile: a numeric/text [value] shown prominently and a
+     * human-readable [label] shown beneath it.
+     */
+    data class StatItem(val value: String, val label: String)
+
     protected fun view(): View = requireView()
 
     protected fun statValue(id: Int): TextView = requireView().findViewById(id)
     protected fun statLabel(id: Int): TextView = requireView().findViewById(id)
+
+    /**
+     * Populates up to four stat tiles from a list of [StatItem] values.
+     */
+    protected fun setStats(vararg items: StatItem) {
+        val v = requireView()
+        val valueIds = intArrayOf(
+            R.id.tv_stat1_value, R.id.tv_stat2_value,
+            R.id.tv_stat3_value, R.id.tv_stat4_value
+        )
+        val labelIds = intArrayOf(
+            R.id.tv_stat1_label, R.id.tv_stat2_label,
+            R.id.tv_stat3_label, R.id.tv_stat4_label
+        )
+        items.take(4).forEachIndexed { i, item ->
+            v.findViewById<TextView>(valueIds[i]).text = item.value
+            v.findViewById<TextView>(labelIds[i]).text = item.label
+        }
+    }
 
     protected fun setStats(
         v1: String, l1: String,
@@ -213,8 +237,17 @@ abstract class BaseModuleFragment : Fragment(R.layout.fragment_single_file) {
     }
 
     protected fun showStatus(msg: String) {
-        tvStatus.text    = msg
+        tvStatus.text      = msg
         tvStatus.isVisible = true
+    }
+
+    /**
+     * Shows an error both as a persistent status text and a dismissible Snackbar.
+     */
+    protected fun showError(msg: String) {
+        val prefixed = "Error: $msg"
+        showStatus(prefixed)
+        Snackbar.make(requireView(), prefixed, Snackbar.LENGTH_LONG).show()
     }
 
     // Open / Share

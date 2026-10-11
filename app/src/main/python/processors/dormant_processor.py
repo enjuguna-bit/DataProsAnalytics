@@ -17,11 +17,11 @@ from openpyxl.utils import get_column_letter
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
+from processors.tabular_io import read_tabular_file
+
 
 def _read_input(path: str) -> pd.DataFrame:
-    if path.lower().endswith(".csv"):
-        return pd.read_csv(path)
-    return pd.read_excel(path)
+    return read_tabular_file(path)
 
 
 def _find_column_by_keywords(df: pd.DataFrame, keywords: List[str]) -> Optional[str]:

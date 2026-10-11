@@ -4,6 +4,21 @@ plugins {
     id 'com.chaquo.python'
 }
 
+def releaseStoreFile = (project.findProperty("MYAPP_UPLOAD_STORE_FILE") ?: "").toString()
+def releaseKeyAlias = (project.findProperty("MYAPP_UPLOAD_KEY_ALIAS") ?: "").toString()
+def releaseStorePassword = (project.findProperty("MYAPP_UPLOAD_STORE_PASSWORD") ?: "").toString()
+def releaseKeyPassword = (project.findProperty("MYAPP_UPLOAD_KEY_PASSWORD") ?: "").toString()
+def buildPythonPath = (
+    project.findProperty("DATAPROS_BUILD_PYTHON")
+        ?: System.getenv("DATAPROS_BUILD_PYTHON")
+        ?: ""
+).toString()
+def offlineGuideSourceFile = rootProject.file("DataPros_User_Guide.docx")
+def offlineGuideAssetDir = "$buildDir/generated/offlineGuideAssets"
+def offlineGuideTextFileName = "DataPros_User_Guide.txt"
+def releaseSigningConfigured =
+        releaseStoreFile && releaseKeyAlias && releaseStorePassword && releaseKeyPassword
+
 android {
     namespace 'com.datapros.app'
     compileSdk 34
@@ -16,6 +31,8 @@ android {
         versionName "1.0.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField "String", "BILLING_BASE_URL", "\"${System.getenv('BILLING_BASE_URL') ?: 'https://bulksms-webhook.enjuguna794.workers.dev'}\""
 
         ndk {
             abiFilters "arm64-v8a", "x86_64"
@@ -34,10 +51,12 @@ android {
 
     signingConfigs {
         release {
-            storeFile file(MYAPP_UPLOAD_STORE_FILE)
-            storePassword MYAPP_UPLOAD_STORE_PASSWORD
-            keyAlias MYAPP_UPLOAD_KEY_ALIAS
-            keyPassword MYAPP_UPLOAD_KEY_PASSWORD
+            if (releaseSigningConfigured) {
+                storeFile file(releaseStoreFile)
+                storePassword releaseStorePassword
+                keyAlias releaseKeyAlias
+                keyPassword releaseKeyPassword
+            }
         }
     }
 
@@ -45,28 +64,105 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            signingConfig signingConfigs.release
+            if (releaseSigningConfigured) {
+                signingConfig signingConfigs.release
+            }
         }
     }
 
     buildFeatures {
         viewBinding true
+        buildConfig true
+    }
+
+    sourceSets {
+        main {
+            assets.srcDir offlineGuideAssetDir
+        }
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 
     kotlinOptions {
-        jvmTarget = '1.8'
+        jvmTarget = '17'
     }
+}
+
+def extractGuideText = { File sourceFile ->
+    String documentXml = null
+    def zip = new java.util.zip.ZipFile(sourceFile)
+    try {
+        def entry = zip.getEntry("word/document.xml")
+        if (entry != null) {
+            zip.getInputStream(entry).withCloseable { input ->
+                documentXml = input.getText("UTF-8")
+            }
+        }
+    } finally {
+        zip.close()
+    }
+
+    if (!documentXml) {
+        throw new GradleException("word/document.xml was not found in ${sourceFile}")
+    }
+
+    return documentXml
+        .replaceAll("(?i)<w:tab[^>]*/>", "\t")
+        .replaceAll("(?i)<w:(br|cr)[^>]*/>", "\n")
+        .replaceAll("(?i)</w:tc>", "\t")
+        .replaceAll("(?i)</w:tr>", "\n")
+        .replaceAll("(?i)</w:p>", "\n\n")
+        .replaceAll("(?s)<[^>]+>", "")
+        .replace('\u00A0' as char, ' ' as char)
+        .replace('\u000B' as char, '\n' as char)
+        .replace("&gt;", ">")
+        .replace("&lt;", "<")
+        .replace("&amp;", "&")
+        .replace("&quot;", "\"")
+        .replace("&apos;", "'")
+        .replaceAll("\\n{3,}", "\n\n")
+        .trim()
+}
+
+tasks.register("syncOfflineGuide") {
+    inputs.file(offlineGuideSourceFile)
+    outputs.dir(offlineGuideAssetDir)
+
+    doFirst {
+        if (!offlineGuideSourceFile.exists()) {
+            throw new GradleException("Offline guide not found at ${offlineGuideSourceFile}")
+        }
+    }
+
+    doLast {
+        def outputDir = file(offlineGuideAssetDir)
+        outputDir.mkdirs()
+
+        copy {
+            from(offlineGuideSourceFile)
+            into(outputDir)
+        }
+
+        def textFile = new File(outputDir, offlineGuideTextFileName)
+        textFile.setText(extractGuideText(offlineGuideSourceFile), "UTF-8")
+    }
+}
+
+tasks.named("preBuild").configure {
+    dependsOn(tasks.named("syncOfflineGuide"))
 }
 
 chaquopy {
     defaultConfig {
         version = "3.11"
-        buildPython("C:/Users/USER/AppData/Local/Programs/Python/Python311/python.exe")
+        if (buildPythonPath) {
+            buildPython(buildPythonPath)
+        } else {
+            buildPython("python")
+        }
 
         pip {
             install "pandas==1.5.0"

@@ -37,10 +37,34 @@ abstract class MenuHubFragment : Fragment(R.layout.fragment_menu_hub) {
         view.findViewById<TextView>(R.id.tv_hub_title).setText(hubTitleRes)
         view.findViewById<TextView>(R.id.tv_hub_subtitle).setText(hubSubtitleRes)
 
-        val cardIds = intArrayOf(R.id.card_action_1, R.id.card_action_2, R.id.card_action_3)
-        val titleIds = intArrayOf(R.id.tv_action_1_title, R.id.tv_action_2_title, R.id.tv_action_3_title)
-        val subtitleIds = intArrayOf(R.id.tv_action_1_subtitle, R.id.tv_action_2_subtitle, R.id.tv_action_3_subtitle)
-        val buttonIds = intArrayOf(R.id.btn_action_1, R.id.btn_action_2, R.id.btn_action_3)
+        val cardIds = intArrayOf(
+            R.id.card_action_1,
+            R.id.card_action_2,
+            R.id.card_action_3,
+            R.id.card_action_4,
+            R.id.card_action_5
+        )
+        val titleIds = intArrayOf(
+            R.id.tv_action_1_title,
+            R.id.tv_action_2_title,
+            R.id.tv_action_3_title,
+            R.id.tv_action_4_title,
+            R.id.tv_action_5_title
+        )
+        val subtitleIds = intArrayOf(
+            R.id.tv_action_1_subtitle,
+            R.id.tv_action_2_subtitle,
+            R.id.tv_action_3_subtitle,
+            R.id.tv_action_4_subtitle,
+            R.id.tv_action_5_subtitle
+        )
+        val buttonIds = intArrayOf(
+            R.id.btn_action_1,
+            R.id.btn_action_2,
+            R.id.btn_action_3,
+            R.id.btn_action_4,
+            R.id.btn_action_5
+        )
         val activeButtons = mutableListOf<View>()
 
         for (index in cardIds.indices) {

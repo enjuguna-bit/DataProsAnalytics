@@ -49,11 +49,31 @@ DataPros/
 
 1. Open the project in Android Studio.
 2. Ensure `local.properties` points to your Android SDK path.
-3. Update `buildPython(...)` in `app/build.gradle` to your local Python executable if needed.
+3. Optionally set `DATAPROS_BUILD_PYTHON` in `local.properties` (or environment) to your Python 3.11 executable path.
 4. Sync Gradle and wait for first time dependency downloads.
 5. Build from Android Studio (`Build APK`) or your preferred Gradle workflow.
 
 For detailed machine setup and troubleshooting, see `SETUP.md`.
+
+## Release Signing (Secure Setup)
+
+Release signing values must not be committed to source control.
+
+1. Add signing values to your local `local.properties` (or pass as environment/project properties in CI):
+
+```properties
+MYAPP_UPLOAD_STORE_FILE=C\:\\path\\to\\your-release-keystore.jks
+MYAPP_UPLOAD_KEY_ALIAS=your_key_alias
+MYAPP_UPLOAD_STORE_PASSWORD=your_store_password
+MYAPP_UPLOAD_KEY_PASSWORD=your_key_password
+```
+
+2. Build release artifacts:
+
+- Android Studio: **Build > Generate Signed Bundle / APK**
+- Gradle: `:app:assembleRelease`
+
+If these properties are not set, release signing is skipped by design in `app/build.gradle`.
 
 ## Notes
 
